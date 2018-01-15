@@ -1,3 +1,11 @@
+
+'''
+By Lisa Tsai
+Latest update - 2018/01/12
+
+'''
+
+
 from picamera import PiCamera
 from picamera.array import PiRGBArray
 from time import sleep
@@ -5,9 +13,13 @@ from time import sleep
 #from imutils.video import FPS
 import imutils
 import cv2
-import datetime
 import time
 import os
+
+#logfile for img
+import csv
+import datetime
+
 
 textc,sum,counter=0,0,0
 thre_v,thre_max=20,255
@@ -18,14 +30,33 @@ w1_min,w1_max,h1_min = 3,640,10
 vote_cx,vote_cy,vote_count,drink_length=[],[],[],[]
 drink_time=0
 drink_total=10
-FPS=10
+FPS=10 # count_max
+cow_num,vote_num=0,0
+contour_list=[]
+###use append to list
 
+d=datetime.datetime.now()
+dx=d.strftime("%Y%m%d")
+csv_filname = "NTU_CF_test.csv"
 
+# Make back-up csv file
+fileexist = os.path.isfile(csv_filename)
+text=['DATETIME','NUM','COUNT','TOTAL']
 
+if fileexist:      
+  print("BACK-UP CSV ALREADY EXISTS!")
+else:
+  file = open(csv_filename, 'w')
+  with open(csv_filename, 'ab') as csv_file:
+    writer = csv.writer(csv_file,delimiter=':')
+    writer.writerow(text)
+	
+	
 camera=PiCamera()
 camera.resolution=(640,480)
 camera.framerate=FPS
 sleep(0.5)
+
 while True:
 	#camera.start_preview()
 	raw=PiRGBArray(camera,size=(640,480))
@@ -51,7 +82,7 @@ while True:
 		# Step 5 : dilate to fill in holes, then find contours
 		thre = cv2.dilate(thre, None, iterations=2)
 		(cnts, _) = cv2.findContours(thre.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-		count = 0
+		count = 0 #accumulated count
 		# Step 6 : loop over the contours
 		for c in cnts:
 			x1,y1,w1,h1 = cv2.boundingRect(c)
@@ -95,11 +126,13 @@ while True:
 		cv2.putText(frame,"Drink time : {}".format(textd),(10,50),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)		
 		cv2.putText(frame,"Count : {}".format(textc),(10,80),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
 		cv2.putText(frame,"Sum : {}".format(texts),(10,110),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
+		
 		#frame = imutils.resize(frame,width=400)
 		cv2.imshow("Frame",frame)
 #		cv2.imshow("Gray",gray)
 #		cv2.imshow("Median",median)
 #		cv2.imshow("Delta",delta)
+		vote_count.append(count)
 		if count > 0 :
 			currentdate=time.strftime("%Y%m%d")
 			mydir = "/home/pi/Desktop/"+currentdate
@@ -115,6 +148,31 @@ while True:
 		raw.truncate(0)
 		#fps.update()
 		if i == FPS:
+			# DT format for sensors
+			cow_num,vote_num=0,0
+			for a in range(len(vote_count)):	
+				if a == 0:
+					vote_num+=1
+			if vote_num < 5 :
+				vote_num=0
+				for a in range(len(vote_count)):	
+					if a >= 1:
+						vote_num+=1
+				if vote_num < 5 :
+					vote_num=0
+					for a in range(len(vote_count)):	
+						if a >= 2:
+							vote_num+=1
+					if vote_num >= 5 :
+						cow_num = 2
+				else:
+					cow_num=1
+			date_stamp = datetime.datetime.fromtimestamp(time_stamp).strftime('%Y-%m-%d %H-%M-%S')
+			text=[date_stamp,cow_num,vote_num,"10"]
+			with open(csv_filename, 'ab') as csv_file:
+				writer = csv.writer(csv_file,delimiter=':')
+				writer.writerow(text)
+			vote_count=[]
 			break
 #fps.stop()
 #print("[INFO] elapsed time:{:,2f}".format(fps.elapsed()))
