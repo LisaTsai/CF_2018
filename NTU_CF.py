@@ -33,11 +33,52 @@ drink_total=10
 FPS=10 # count_max
 cow_num,vote_num=0,0
 contour_list=[]
-###use append to list
+area_within_thre=0
+x_within_thre=0
+y_within_thre=0
 
+### Options
+
+db_enable = 1
+
+#db number
+f=open('/home/pi/Adafruit_Python_BME280/DB_NUM.txt','r')
+db = f.read()
+db=db.strip('\n')
+
+#node number
+f=open('/home/pi/Adafruit_Python_BME280/NODE_IN.txt','r')
+node_in = f.read()
+node_in=node_in.strip('\n')
+f=open('/home/pi/Adafruit_Python_BME280/NODE_OUT.txt','r')
+node_out = f.read()
+node_out=node_out.strip('\n')
+
+#location
+location = "Lab405"
+location_cam = "Lab405"+"_"+db
+
+#db codes where:
+#CF=Cow farm
+db_code = "CF"
+port_udp = 30001
+ip = "140.112.94.123"
+
+try:
+  image_dir = "/home/pi/COW_IMAGES/"
+  os.mkdir(image_dir,0755);
+except:
+  pass
+# Open UDP socket
+sock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+
+url_in='http://140.112.94.123:30000/DAIRY_COW/IMAGE/RX_IMG.php?node='+node_in+'&location='+location_cam
+url_out='http://140.112.94.123:30000/DAIRY_COW/IMAGE/RX_IMG.php?node='+node_out+'&location='+location_cam
+
+# time
 d=datetime.datetime.now()
 dx=d.strftime("%Y%m%d")
-csv_filname = "NTU_CF_test.csv"
+csv_filename = "NTU_CF_test.csv"
 
 # Make back-up csv file
 fileexist = os.path.isfile(csv_filename)
@@ -55,6 +96,9 @@ else:
 camera=PiCamera()
 camera.resolution=(640,480)
 camera.framerate=FPS
+camera.rotation = 0
+#camera.awb_mode = 'auto'
+#camera.drc_strength = 'high'
 sleep(0.5)
 
 while True:
@@ -78,7 +122,7 @@ while True:
 		# Step 4 : absolute diff between lastframe and current frame
 		delta = cv2.absdiff(lastframe,median)
 		thre=cv2.threshold(delta,thre_v,thre_max, cv2.THRESH_BINARY)[1]
-		lastframe = median
+		#lastframe = median
 		# Step 5 : dilate to fill in holes, then find contours
 		thre = cv2.dilate(thre, None, iterations=2)
 		(cnts, _) = cv2.findContours(thre.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
@@ -150,15 +194,15 @@ while True:
 		if i == FPS:
 			# DT format for sensors
 			cow_num,vote_num=0,0
-			for a in range(len(vote_count)):	
-				if a == 0:
+			for a in range(len(vote_count)-1):	
+				if vote_count[a] == 0:
 					vote_num+=1
 			if vote_num < 5 :
 				vote_num=0
 				for a in range(len(vote_count)):	
 					if a >= 1:
 						vote_num+=1
-				if vote_num < 5 :
+				if vote_num >= 5 :
 					vote_num=0
 					for a in range(len(vote_count)):	
 						if a >= 2:
@@ -167,11 +211,13 @@ while True:
 						cow_num = 2
 				else:
 					cow_num=1
+			time_stamp=time.time()
 			date_stamp = datetime.datetime.fromtimestamp(time_stamp).strftime('%Y-%m-%d %H-%M-%S')
 			text=[date_stamp,cow_num,vote_num,"10"]
+			print(text)
 			with open(csv_filename, 'ab') as csv_file:
-				writer = csv.writer(csv_file,delimiter=':')
-				writer.writerow(text)
+                        	writer = csv.writer(csv_file,delimiter=':')
+                        	writer.writerow(text)
 			vote_count=[]
 			break
 #fps.stop()
