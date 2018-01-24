@@ -3,9 +3,11 @@
 #********************************#
 #********************************#
 #   Common platform WiSN program #
-#    By: Dan Jeric Arcega Rustia #
+#    By: Lisa Tsai				 # 
+#		 Dan Jeric Arcega Rustia #
 #                                #
 #   Log:                         #
+#   1/15/2018 - use BME280       #
 #   9/28/2017 - universal code   #
 #   7/5/2017 - added CSV backup  #
 #   6/26/2017 - new program for  #
@@ -41,7 +43,7 @@ from urllib import urlencode
 import os
 
 #sensor libraries
-import Adafruit_DHT
+from Adafruit_BME280 import *
 import smbus
 import csv
 
@@ -74,14 +76,17 @@ db_code = "CF"
 
 
 # dht sensor constants
-dhtg = Adafruit_DHT.AM2302
-dht_pin = 17
+#dhtg = Adafruit_DHT.AM2302
+#dht_pin = 17
 
 #TH value sending delay in seconds
-send_delay=300
+send_delay=60
 
 #csv backup filename
 csv_filename="SENSOR_"+location_cam+"_"+node+".csv"
+
+Hum=[]
+Temp=[]
 
 #################################
 # Do not touch the codes below! #
@@ -120,6 +125,8 @@ camera.framerate = 15
 camera.rotation = 0
 camera.awb_mode = 'auto'
 camera.drc_strength = 'high'
+
+sensor = BME280(t_mode=BME280_OSAMPLE_8, p_mode=BME280_OSAMPLE_8, h_mode=BME280_OSAMPLE_8)
 
 #bh1750 constants
 DEVICE     = 0x23 # Default device I2C address
@@ -179,6 +186,14 @@ def getImage():
     files = {'file':f}
     r=requests.post(url,files=files)
     print(r.content)
+	for the_file in os.listdir(image_dir):
+	    file_path = os.path.join(image_dir,the_file)
+		try:
+		    if os.path.isfile(file_path):
+			    os.remove(file_path)
+				print("delete sucess")
+		except Expection as e:
+		    print e
 
 
 ##################
@@ -239,8 +254,7 @@ while 1:
     send_timer=send_timer+1
     print("Sensor: " + str(send_timer) + "  Camera: " + str(hr) + ":" + str(mn) + ":" + str(sec))
     time.sleep(1)
-    Hum=[]
-    Temp=[]
+
     if (mn%1 == 0 and sec == 0):
         #if hr>6 and hr <=18:
         try:
@@ -250,15 +264,20 @@ while 1:
 
     if send_timer>=send_delay/10: 
         print("Querying...")
-
+        send_timer=0
         # get sensor 1 data
         try:
             # read sensor data
-            
-            h_temp, t_temp= Adafruit_DHT.read_retry(dhtg, dht_pin)
+            degrees = sensor.read_temperature()
+	    humidity = sensor.read_humidity()
+			
+            h_temp, t_temp= humidity,degrees
             Hum.append(h_temp)
             Temp.append(t_temp)
-            
+            #print(h_temp)
+            #print(t_temp)
+            #print(Hum)
+            #print(Temp)
             if len(Hum)==10:
               Temp.sort()
               Hum.sort()
@@ -276,6 +295,16 @@ while 1:
                 #_packet1c=db_code+":"+date_stamp+":"+node+":I:"+THI+":"+location+":"+db
                 print(_packet1a)
                 print(_packet1b)
+                if db_enable==1:
+                    try:
+                        if s1==1:
+                            sock.sendto(_packet1a, (ip,port_udp))
+                            time.sleep(0.2)
+                            sock.sendto(_packet1b, (ip,port_udp))
+                            time.sleep(0.2)
+                            port.reset_input_buffer()                        
+                    except:
+                        pass
                 #print(_packet1c)
                 text=[db_code,date_stamp,node,"T",temp,location,db]
                 text2=[db_code,date_stamp,node,"H",hum,location,db]
@@ -287,40 +316,9 @@ while 1:
                   #writer.writerow(text3)
         except:
             pass
-        
-	if s2==1:            
-            # get sensor 2 data
-            try:
-                lux = readLight()
-                lux = "{0:.2f}".format(lux)
-                _packet2a=db_code+":"+date_stamp+":"+node+":L:"+lux+":"+location+":"+db
-                print(_packet2a)
-                text=[db_code,date_stamp,node,"L",lux,location,db]        
-                with open(csv_filename, 'ab') as csv_file:
-                  writer = csv.writer(csv_file,delimiter=':')
-                  writer.writerow(text)
-            except:
-                pass
 
-        send_timer=0       
+      
 
-
-        if db_enable==1:
-            try:
-                if s1==1:
-                    sock.sendto(_packet1a, (ip,port_udp))
-                    time.sleep(0.2)
-                    sock.sendto(_packet1b, (ip,port_udp))
-                    time.sleep(0.2)
-                    #sock.sendto(_packet1c, (ip,port_udp))
-                    #time.sleep(0.2)
-                if s2==1:
-                    sock.sendto(_packet2a, (ip,port_udp))
-                    time.sleep(0.2)
-
-                port.reset_input_buffer()                        
-            except:
-                pass
 
              
             
