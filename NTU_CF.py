@@ -20,6 +20,9 @@ import os
 import csv
 import datetime
 
+### Options
+
+db_enable = 1
 
 textc,sum,counter=0,0,0
 thre_v,thre_max=20,255
@@ -31,15 +34,14 @@ vote_cx,vote_cy,vote_count,drink_length=[],[],[],[]
 drink_time=0
 drink_total=10
 FPS=10 # count_max
+vote_max2,vote_count2,vote_num2 = 30,0,0
 cow_num,vote_num=0,0
 contour_list=[]
 area_within_thre=0
 x_within_thre=0
 y_within_thre=0
+inout_flag=0
 
-### Options
-
-db_enable = 1
 
 #db number
 f=open('/home/pi/Adafruit_Python_BME280/DB_NUM.txt','r')
@@ -95,11 +97,32 @@ else:
 	
 camera=PiCamera()
 camera.resolution=(640,480)
-camera.framerate=FPS
+camera.framerate = 5
 camera.rotation = 0
 #camera.awb_mode = 'auto'
 #camera.drc_strength = 'high'
 sleep(0.5)
+
+
+### Function
+
+def sendImage(locationx,inout):
+
+    f = open(locationx,'rb')
+    files = {'file':f}
+    if inout == 1:
+      r=requests.post(url_in,files=files)
+    else:
+      r=requests.post(url_out,files=files)
+    print(r.content)
+    try:
+      if os.path.isfile(file_path):
+	os.remove(file_path)
+	print("delete sucess")
+    except Expection as e:
+      print e
+
+####
 
 while True:
 	#camera.start_preview()
@@ -188,6 +211,9 @@ while True:
 			os.chdir(mydir)
 			filename = time.strftime("%H%M%S")+'.jpg' 
 			cv2.imwrite(filename,frame)
+		#if count < 0 and inout_flag == 1:
+                 # sendImage(filename)
+                
 		key = cv2.waitKey(1)&0xFF
 		raw.truncate(0)
 		#fps.update()
