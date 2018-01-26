@@ -121,8 +121,8 @@ def sendImage(locationx,inout):
         r = requests.post(url_out,files=files)
     print(r.content)
     try:
-        if os.path.isfile(file_path):
-            os.remove(file_path)
+        if os.path.isfile(locationx):
+            os.remove(locationx)
             #print("delete sucess")
     except Exception as e:
         print e
