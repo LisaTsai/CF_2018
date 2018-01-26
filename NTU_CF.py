@@ -17,6 +17,7 @@ import time
 import os
 
 #logfile for img
+
 import csv
 import datetime
 
@@ -24,44 +25,43 @@ import datetime
 
 db_enable = 1
 
-textc,sum,counter=0,0,0
-thre_v,thre_max=20,255
+textc,sum,counter = 0,0,0
+thre_v,thre_max = 20,255
 #lastframe = None
 crop_x,crop_y,crop_w,crop_h = 0,0,640,480
 min_areaD,max_areaD = 800,10000
 w1_min,w1_max,h1_min = 3,640,10
-vote_cx,vote_cy,vote_count,drink_length=[],[],[],[]
-drink_time=0
-drink_total=10
-FPS=10 # count_max
+vote_cx,vote_cy,vote_count,drink_length = [],[],[],[]
+drink_time = 0
+drink_total = 10
+FPS = 10 # count_max
 vote_max2,vote_count2,vote_num2 = 30,0,0
-cow_num,vote_num=0,0
-contour_list=[]
-area_within_thre=0
-x_within_thre=0
-y_within_thre=0
-inout_flag=0
+cow_num,vote_num = 0,0
+contour_list = []
+area_within_thre = 0
+x_within_thre = 0
+y_within_thre = 0
+inout_flag = 1
 
 
 #db number
-f=open('/home/pi/Adafruit_Python_BME280/DB_NUM.txt','r')
+f = open('/home/pi/Adafruit_Python_BME280/DB_NUM.txt','r')
 db = f.read()
-db=db.strip('\n')
+db = db.strip('\n')
 
 #node number
-f=open('/home/pi/Adafruit_Python_BME280/NODE_IN.txt','r')
+f = open('/home/pi/Adafruit_Python_BME280/NODE_IN.txt','r')
 node_in = f.read()
-node_in=node_in.strip('\n')
-f=open('/home/pi/Adafruit_Python_BME280/NODE_OUT.txt','r')
+node_in = node_in.strip('\n')
+f = open('/home/pi/Adafruit_Python_BME280/NODE_OUT.txt','r')
 node_out = f.read()
-node_out=node_out.strip('\n')
+node_out = node_out.strip('\n')
 
 #location
 location = "Lab405"
-location_cam = "Lab405"+"_"+db
+location_cam = location+"_"+db
 
-#db codes where:
-#CF=Cow farm
+#db codes:
 db_code = "CF"
 port_udp = 30001
 ip = "140.112.94.123"
@@ -97,7 +97,7 @@ else:
 	
 camera=PiCamera()
 camera.resolution=(640,480)
-camera.framerate = 5
+camera.framerate = 10
 camera.rotation = 0
 #camera.awb_mode = 'auto'
 #camera.drc_strength = 'high'
@@ -111,14 +111,14 @@ def sendImage(locationx,inout):
     f = open(locationx,'rb')
     files = {'file':f}
     if inout == 1:
-      r=requests.post(url_in,files=files)
+      r = requests.post(url_in,files=files)
     else:
-      r=requests.post(url_out,files=files)
+      r = requests.post(url_out,files=files)
     print(r.content)
     try:
       if os.path.isfile(file_path):
-	os.remove(file_path)
-	print("delete sucess")
+        os.remove(file_path)
+        #print("delete sucess")
     except Expection as e:
       print e
 
@@ -131,6 +131,7 @@ while True:
 	#print("[INFO]sampling frames from picamera module")
 	#fps=FPS().start()
 	for(i,f) in enumerate(stream):
+        
 		frame = f.array
 		# Step 1 : grayscale
 		gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -200,19 +201,37 @@ while True:
 #		cv2.imshow("Median",median)
 #		cv2.imshow("Delta",delta)
 		vote_count.append(count)
-		if count > 0 :
-			currentdate=time.strftime("%Y%m%d")
-			mydir = "/home/pi/Desktop/"+currentdate
-			try:
-				os.makedirs(mydir)
-			except OSError:
-				if not os.path.isdir(mydir):
-					raise
-			os.chdir(mydir)
-			filename = time.strftime("%H%M%S")+'.jpg' 
-			cv2.imwrite(filename,frame)
-		#if count < 0 and inout_flag == 1:
-                 # sendImage(filename)
+        if vote_count2 < vote_max2:
+            vote_count2 += 1
+        else :
+            vote_count2 = 0
+            if vote_num2 >= 15 and inout_flag == 1:
+                currentdate=time.strftime("%Y%m%d")
+                mydir = "/home/pi/COW_IMAGES_in/"+currentdate
+                try:
+                    os.makedirs(mydir)
+                except OSError:
+                    if not os.path.isdir(mydir):
+                        raise
+                os.chdir(mydir)
+                filename = time.strftime("%H%M%S")+'.jpg'
+                cv2.imwrite(filename,frame)
+                sendImage(filename,inout_flag)
+                inout_flag = 0
+            elif vote_num2 < 15 and inout_flag == 0 :
+                currentdate=time.strftime("%Y%m%d")
+                mydir = "/home/pi/COW_IMAGES_out/"+currentdate
+                try:
+                    os.makedirs(mydir)
+                except OSError:
+                    if not os.path.isdir(mydir):
+                        raise
+                os.chdir(mydir)
+                filename = time.strftime("%H%M%S")+'.jpg'
+                cv2.imwrite(filename,frame)
+                sendImage(filename,inout_flag)
+                inout_flag = 1
+            vote_num2 = 0
                 
 		key = cv2.waitKey(1)&0xFF
 		raw.truncate(0)
@@ -240,6 +259,8 @@ while True:
 			time_stamp=time.time()
 			date_stamp = datetime.datetime.fromtimestamp(time_stamp).strftime('%Y-%m-%d %H-%M-%S')
 			text=[date_stamp,cow_num,vote_num,"10"]
+            if vote_num >= 5:
+                vote_num2 += 1
 			print(text)
 			with open(csv_filename, 'ab') as csv_file:
                         	writer = csv.writer(csv_file,delimiter=':')
