@@ -67,10 +67,10 @@ port_udp = 30001
 ip = "140.112.94.123"
 
 try:
-  image_dir = "/home/pi/COW_IMAGES/"
-  os.mkdir(image_dir,0755);
+    image_dir = "/home/pi/COW_IMAGES/"
+    os.mkdir(image_dir,0755);
 except:
-  pass
+    pass
 # Open UDP socket
 sock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
 
@@ -87,12 +87,12 @@ fileexist = os.path.isfile(csv_filename)
 text=['DATETIME','NUM','COUNT','TOTAL']
 
 if fileexist:      
-  print("BACK-UP CSV ALREADY EXISTS!")
+    print("BACK-UP CSV ALREADY EXISTS!")
 else:
-  file = open(csv_filename, 'w')
-  with open(csv_filename, 'ab') as csv_file:
-    writer = csv.writer(csv_file,delimiter=':')
-    writer.writerow(text)
+    file = open(csv_filename, 'w')
+    with open(csv_filename, 'ab') as csv_file:
+        writer = csv.writer(csv_file,delimiter=':')
+        writer.writerow(text)
 	
 	
 camera=PiCamera()
@@ -107,54 +107,50 @@ sleep(0.5)
 ### Function
 
 def sendImage(locationx,inout):
-
     f = open(locationx,'rb')
     files = {'file':f}
     if inout == 1:
-      r = requests.post(url_in,files=files)
+        r = requests.post(url_in,files=files)
     else:
-      r = requests.post(url_out,files=files)
+        r = requests.post(url_out,files=files)
     print(r.content)
     try:
-      if os.path.isfile(file_path):
-        os.remove(file_path)
-        #print("delete sucess")
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+            #print("delete sucess")
     except Expection as e:
-      print e
-
+        print e
 ####
 
 while True:
-	#camera.start_preview()
-	raw=PiRGBArray(camera,size=(640,480))
-	stream = camera.capture_continuous(raw,format="bgr",use_video_port=True)
-	#print("[INFO]sampling frames from picamera module")
-	#fps=FPS().start()
-	for(i,f) in enumerate(stream):
-        
-		frame = f.array
-		# Step 1 : grayscale
-		gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-		# Step 2 : medianBlur
-		median = cv2.medianBlur(gray,7) 
+    #camera.start_preview()
+    raw=PiRGBArray(camera,size=(640,480))
+    stream = camera.capture_continuous(raw,format="bgr",use_video_port=True)
+    #print("[INFO]sampling frames from picamera module")
+    #fps=FPS().start()
+    for(i,f) in enumerate(stream):
+        frame = f.array
+        # Step 1 : grayscale
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        # Step 2 : medianBlur
+        median = cv2.medianBlur(gray,7)
 		# Step 3 : find lastframe
-		if counter == 0:
-			lastframe = median
-			counter = 1
-			break
-		
+        if counter == 0:
+            lastframe = median
+            counter = 1
+            break
 		# Step 4 : absolute diff between lastframe and current frame
-		delta = cv2.absdiff(lastframe,median)
-		thre=cv2.threshold(delta,thre_v,thre_max, cv2.THRESH_BINARY)[1]
+        delta = cv2.absdiff(lastframe,median)
+        thre=cv2.threshold(delta,thre_v,thre_max, cv2.THRESH_BINARY)[1]
 		#lastframe = median
 		# Step 5 : dilate to fill in holes, then find contours
-		thre = cv2.dilate(thre, None, iterations=2)
-		(cnts, _) = cv2.findContours(thre.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-		count = 0 #accumulated count
+        thre = cv2.dilate(thre, None, iterations=2)
+        (cnts, _) = cv2.findContours(thre.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+        count = 0 #accumulated count
 		# Step 6 : loop over the contours
-		for c in cnts:
-			x1,y1,w1,h1 = cv2.boundingRect(c)
-			cx,cy = x1+w1/2, y1+h1/2
+        for c in cnts:
+            x1,y1,w1,h1 = cv2.boundingRect(c)
+            cx,cy = x1+w1/2, y1+h1/2
 			#if i <=1:
 			#	vote_cx.append(cx)
 			#	vote_cy.append(cy)
@@ -178,29 +174,29 @@ while True:
 			#			vote_count[z]+=1
 					
 			# if the contour is too small, ignore it
-			if h1 < h1_min or cv2.contourArea(c) < min_areaD or  cv2.contourArea(c) > max_areaD or w1 < w1_min or w1 > w1_max:
-				continue
-			sum+=1
-			count +=1
+            if h1 < h1_min or cv2.contourArea(c) < min_areaD or  cv2.contourArea(c) > max_areaD or w1 < w1_min or w1 > w1_max:
+                continue
+            sum+=1
+            count +=1
 			# compute the bounding box for the contour and  draw
-			(x, y, w, h) = cv2.boundingRect(c)
-			cv2.rectangle(frame, (x+crop_x, y+crop_y), (x+crop_x + w, y+crop_y + h), (0, 255, 0), 2)
-		textc=str(count)
-		texts = str(sum)
-		textd=str(drink_time)
-		text=str(i)
-		cv2.putText(frame, "FPS : {}".format(text), (10, 20),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-		cv2.putText(frame, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),(10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
-		cv2.putText(frame,"Drink time : {}".format(textd),(10,50),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)		
-		cv2.putText(frame,"Count : {}".format(textc),(10,80),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
-		cv2.putText(frame,"Sum : {}".format(texts),(10,110),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
+            (x, y, w, h) = cv2.boundingRect(c)
+            cv2.rectangle(frame, (x+crop_x, y+crop_y), (x+crop_x + w, y+crop_y + h), (0, 255, 0), 2)
+        textc=str(count)
+        texts = str(sum)
+        textd=str(drink_time)
+        text=str(i)
+        cv2.putText(frame, "FPS : {}".format(text), (10, 20),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+        cv2.putText(frame, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),(10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
+        cv2.putText(frame,"Drink time : {}".format(textd),(10,50),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
+        cv2.putText(frame,"Count : {}".format(textc),(10,80),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
+        cv2.putText(frame,"Sum : {}".format(texts),(10,110),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
 		
 		#frame = imutils.resize(frame,width=400)
-		cv2.imshow("Frame",frame)
+        cv2.imshow("Frame",frame)
 #		cv2.imshow("Gray",gray)
 #		cv2.imshow("Median",median)
 #		cv2.imshow("Delta",delta)
-		vote_count.append(count)
+        vote_count.append(count)
         if vote_count2 < vote_max2:
             vote_count2 += 1
         else :
@@ -233,40 +229,40 @@ while True:
                 inout_flag = 1
             vote_num2 = 0
                 
-		key = cv2.waitKey(1)&0xFF
-		raw.truncate(0)
+        key = cv2.waitKey(1)&0xFF
+        raw.truncate(0)
 		#fps.update()
-		if i == FPS:
+        if i == FPS:
 			# DT format for sensors
-			cow_num,vote_num=0,0
-			for a in range(len(vote_count)-1):	
-				if vote_count[a] == 0:
-					vote_num+=1
-			if vote_num < 5 :
-				vote_num=0
-				for a in range(len(vote_count)):	
-					if a >= 1:
-						vote_num+=1
-				if vote_num >= 5 :
-					vote_num=0
-					for a in range(len(vote_count)):	
-						if a >= 2:
-							vote_num+=1
-					if vote_num >= 5 :
-						cow_num = 2
-				else:
-					cow_num=1
-			time_stamp=time.time()
-			date_stamp = datetime.datetime.fromtimestamp(time_stamp).strftime('%Y-%m-%d %H-%M-%S')
-			text=[date_stamp,cow_num,vote_num,"10"]
+            cow_num,vote_num=0,0
+            for a in range(len(vote_count)-1):
+                if vote_count[a] == 0:
+                    vote_num+=1
+            if vote_num < 5 :
+                vote_num=0
+                for a in range(len(vote_count)):
+                    if a >= 1:
+                        vote_num+=1
+                if vote_num >= 5 :
+                    vote_num=0
+                    for a in range(len(vote_count)):
+                        if a >= 2:
+                            vote_num+=1
+                    if vote_num >= 5 :
+                        cow_num = 2
+                else:
+                    cow_num=1
+            time_stamp=time.time()
+            date_stamp = datetime.datetime.fromtimestamp(time_stamp).strftime('%Y-%m-%d %H-%M-%S')
+            text=[date_stamp,cow_num,vote_num,"10"]
             if vote_num >= 5:
                 vote_num2 += 1
-			print(text)
-			with open(csv_filename, 'ab') as csv_file:
-                        	writer = csv.writer(csv_file,delimiter=':')
-                        	writer.writerow(text)
-			vote_count=[]
-			break
+            print(text)
+            with open(csv_filename, 'ab') as csv_file:
+                writer = csv.writer(csv_file,delimiter=':')
+                writer.writerow(text)
+            vote_count=[]
+            break
 #fps.stop()
 #print("[INFO] elapsed time:{:,2f}".format(fps.elapsed()))
 #print("[INFO] approx. FPS: {:,2f}".fomat(fps.fps()))
