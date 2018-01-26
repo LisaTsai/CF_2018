@@ -4,20 +4,26 @@ By Lisa Tsai
 Latest update - 2018/01/12
 
 '''
+################# Libraries ###################
 
+#libraries
+from time import sleep
+import serial
+import socket
 
+#cam libraries
+import numpy as np
+import requests
+import urllib2
+from urllib import urlencode
+import os
 from picamera import PiCamera
 from picamera.array import PiRGBArray
-from time import sleep
-#from imutils.video.pivideostream import PiVideoStream
-#from imutils.video import FPS
 import imutils
 import cv2
 import time
-import os
 
 #logfile for img
-
 import csv
 import datetime
 
@@ -118,7 +124,7 @@ def sendImage(locationx,inout):
         if os.path.isfile(file_path):
             os.remove(file_path)
             #print("delete sucess")
-    except Expection as e:
+    except Exception as e:
         print e
 ####
 
@@ -196,39 +202,7 @@ while True:
 #		cv2.imshow("Gray",gray)
 #		cv2.imshow("Median",median)
 #		cv2.imshow("Delta",delta)
-        vote_count.append(count)
-        if vote_count2 < vote_max2:
-            vote_count2 += 1
-        else :
-            vote_count2 = 0
-            if vote_num2 >= 15 and inout_flag == 1:
-                currentdate=time.strftime("%Y%m%d")
-                mydir = "/home/pi/COW_IMAGES_in/"+currentdate
-                try:
-                    os.makedirs(mydir)
-                except OSError:
-                    if not os.path.isdir(mydir):
-                        raise
-                os.chdir(mydir)
-                filename = time.strftime("%H%M%S")+'.jpg'
-                cv2.imwrite(filename,frame)
-                sendImage(filename,inout_flag)
-                inout_flag = 0
-            elif vote_num2 < 15 and inout_flag == 0 :
-                currentdate=time.strftime("%Y%m%d")
-                mydir = "/home/pi/COW_IMAGES_out/"+currentdate
-                try:
-                    os.makedirs(mydir)
-                except OSError:
-                    if not os.path.isdir(mydir):
-                        raise
-                os.chdir(mydir)
-                filename = time.strftime("%H%M%S")+'.jpg'
-                cv2.imwrite(filename,frame)
-                sendImage(filename,inout_flag)
-                inout_flag = 1
-            vote_num2 = 0
-                
+        vote_count.append(count)       
         key = cv2.waitKey(1)&0xFF
         raw.truncate(0)
 		#fps.update()
@@ -262,6 +236,35 @@ while True:
                 writer = csv.writer(csv_file,delimiter=':')
                 writer.writerow(text)
             vote_count=[]
+            if vote_count2 < vote_max2:
+                vote_count2 += 1
+            else :
+                vote_count2 = 0
+                if vote_num2 >= 15 :
+                    mydir = "/home/pi/COW_IMAGES_in/"
+                    try:
+                        os.makedirs(mydir)
+                    except OSError:
+                        if not os.path.isdir(mydir):
+                            raise
+                    os.chdir(mydir)
+                    filename = time.strftime("%Y_%m_%d %H_%M_%S")+'.jpg'
+                    cv2.imwrite(filename,frame)
+                    sendImage(filename,inout_flag)
+                    inout_flag = 0
+                elif vote_num2 < 15 :
+                    mydir = "/home/pi/COW_IMAGES_out/"
+                    try:
+                        os.makedirs(mydir)
+                    except OSError:
+                        if not os.path.isdir(mydir):
+                            raise
+                    os.chdir(mydir)
+                    filename = time.strftime("%Y_%m_%d %H_%M_%S")+'.jpg'
+                    cv2.imwrite(filename,frame)
+                    sendImage(filename,inout_flag)
+                    inout_flag = 1
+                vote_num2 = 0
             break
 #fps.stop()
 #print("[INFO] elapsed time:{:,2f}".format(fps.elapsed()))
