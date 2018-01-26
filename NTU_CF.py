@@ -64,7 +64,7 @@ node_out = f.read()
 node_out = node_out.strip('\n')
 
 #location
-location = "Lab405"
+location = "NTU_CF"
 location_cam = location+"_"+db
 
 #db codes:
@@ -187,18 +187,18 @@ while True:
 			# compute the bounding box for the contour and  draw
             (x, y, w, h) = cv2.boundingRect(c)
             cv2.rectangle(frame, (x+crop_x, y+crop_y), (x+crop_x + w, y+crop_y + h), (0, 255, 0), 2)
-        textc=str(count)
-        texts = str(sum)
-        textd=str(drink_time)
-        text=str(i)
-        cv2.putText(frame, "FPS : {}".format(text), (10, 20),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-        cv2.putText(frame, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),(10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
-        cv2.putText(frame,"Drink time : {}".format(textd),(10,50),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
-        cv2.putText(frame,"Count : {}".format(textc),(10,80),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
-        cv2.putText(frame,"Sum : {}".format(texts),(10,110),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
+#       textc=str(count)
+#       texts = str(sum)
+#       textd=str(drink_time)
+#       text=str(i)
+#       cv2.putText(frame, "FPS : {}".format(text), (10, 20),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+#       cv2.putText(frame, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),(10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
+#       cv2.putText(frame,"Drink time : {}".format(textd),(10,50),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
+#       cv2.putText(frame,"Count : {}".format(textc),(10,80),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
+#       cv2.putText(frame,"Sum : {}".format(texts),(10,110),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
 		
 		#frame = imutils.resize(frame,width=400)
-        cv2.imshow("Frame",frame)
+#       cv2.imshow("Frame",frame)
 #		cv2.imshow("Gray",gray)
 #		cv2.imshow("Median",median)
 #		cv2.imshow("Delta",delta)
@@ -229,7 +229,7 @@ while True:
             time_stamp=time.time()
             date_stamp = datetime.datetime.fromtimestamp(time_stamp).strftime('%Y-%m-%d %H-%M-%S')
             text=[date_stamp,cow_num,vote_num,"10"]
-            if vote_num >= 5:
+            if vote_num >= 5 and cow_num > 0:
                 vote_num2 += 1
             print(text)
             with open(csv_filename, 'ab') as csv_file:
@@ -240,7 +240,7 @@ while True:
                 vote_count2 += 1
             else :
                 vote_count2 = 0
-                if vote_num2 >= 15 :
+                if vote_num2 >= 5:
                     mydir = "/home/pi/COW_IMAGES_in/"
                     try:
                         os.makedirs(mydir)
@@ -252,7 +252,7 @@ while True:
                     cv2.imwrite(filename,frame)
                     sendImage(filename,inout_flag)
                     inout_flag = 0
-                elif vote_num2 < 15 :
+                elif vote_num2 < 5 and inout_flag == 0:
                     mydir = "/home/pi/COW_IMAGES_out/"
                     try:
                         os.makedirs(mydir)
