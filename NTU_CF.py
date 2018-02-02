@@ -34,7 +34,7 @@ db_enable = 1
 textc,sum,counter = 0,0,0
 thre_v,thre_max = 20,255
 #lastframe = None
-crop_x,crop_y,crop_w,crop_h = 0,0,640,480
+crop_x,crop_y,crop_w,crop_h = 100,250,380,100
 min_areaD,max_areaD = 800,10000
 w1_min,w1_max,h1_min = 3,640,10
 vote_cx,vote_cy,vote_count,drink_length = [],[],[],[]
@@ -47,7 +47,7 @@ contour_list = []
 area_within_thre = 0
 x_within_thre = 0
 y_within_thre = 0
-inout_flag = 1
+inout_flag = 0
 
 
 #db number
@@ -136,6 +136,8 @@ while True:
     #fps=FPS().start()
     for(i,f) in enumerate(stream):
         frame = f.array
+        img=frame.copy()
+        frame = frame[crop_y:crop_y+crop_h,crop_x:crop_x+crop_w]
         # Step 1 : grayscale
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         # Step 2 : medianBlur
@@ -186,7 +188,7 @@ while True:
             count +=1
 			# compute the bounding box for the contour and  draw
             (x, y, w, h) = cv2.boundingRect(c)
-            cv2.rectangle(frame, (x+crop_x, y+crop_y), (x+crop_x + w, y+crop_y + h), (0, 255, 0), 2)
+            cv2.rectangle(img, (x+crop_x, y+crop_y), (x+crop_x + w, y+crop_y + h), (0, 255, 0), 2)
         textc=str(count)
         texts = str(sum)
         textd=str(drink_time)
@@ -199,6 +201,7 @@ while True:
 		
 		#frame = imutils.resize(frame,width=400)
         cv2.imshow("Frame",frame)
+        cv2.imshow("Img",img)
 #		cv2.imshow("Gray",gray)
 #		cv2.imshow("Median",median)
 #		cv2.imshow("Delta",delta)
@@ -249,9 +252,9 @@ while True:
                             raise
                     os.chdir(mydir)
                     filename = time.strftime("%Y_%m_%d %H_%M_%S")+'.jpg'
-                    cv2.imwrite(filename,frame)
+                    cv2.imwrite(filename,img)
                     sendImage(filename,inout_flag)
-                    inout_flag = 0
+                    inout_flag = 1
                 elif vote_num2 < 15 :
                     mydir = "/home/pi/COW_IMAGES_out/"
                     try:
@@ -261,9 +264,9 @@ while True:
                             raise
                     os.chdir(mydir)
                     filename = time.strftime("%Y_%m_%d %H_%M_%S")+'.jpg'
-                    cv2.imwrite(filename,frame)
+                    cv2.imwrite(filename,img)
                     sendImage(filename,inout_flag)
-                    inout_flag = 1
+                    inout_flag = 0
                 vote_num2 = 0
             break
 #fps.stop()

@@ -1,0 +1,6 @@
+import cv2
+from time import sleep
+img = cv2.imread("/home/pi/Desktop/NODE22_2018_01_26 18_27_14.jpg")
+cv2.imshow("Test",img)
+key = cv2.waitKey(1)&0xF
+cv2.destroyAllWindows()
