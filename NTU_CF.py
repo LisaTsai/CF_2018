@@ -89,7 +89,7 @@ url_out='http://140.112.94.123:30000/DAIRY_COW/IMAGE/RX_IMG.php?node='+node_out+
 # time
 d=datetime.datetime.now()
 dx=d.strftime("%Y%m%d")
-csv_filename = "NTU_CF_test.csv"
+csv_filename = "/home/pi/NTU_CF_data.csv"
 
 # Make back-up csv file
 fileexist = os.path.isfile(csv_filename)
