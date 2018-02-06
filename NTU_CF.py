@@ -34,7 +34,10 @@ db_enable = 1
 textc,sum,counter = 0,0,0
 thre_v,thre_max = 20,255
 #lastframe = None
+#NTU_CF node2 sink
 crop_x,crop_y,crop_w,crop_h = 100,250,380,100
+#NTU_CF node1 sink 
+#crop_x,crop_y,crop_w,crop_h = 70,268,345,67
 min_areaD,max_areaD = 800,10000
 w1_min,w1_max,h1_min = 3,640,10
 vote_cx,vote_cy,vote_count,drink_length = [],[],[],[]
@@ -194,15 +197,16 @@ while True:
         texts = str(sum)
         textd=str(drink_time)
         text=str(i)
-        cv2.putText(frame, "FPS : {}".format(text), (10, 20),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-        cv2.putText(frame, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),(10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
-        cv2.putText(frame,"Drink time : {}".format(textd),(10,50),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
-        cv2.putText(frame,"Count : {}".format(textc),(10,80),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
-        cv2.putText(frame,"Sum : {}".format(texts),(10,110),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
+#        cv2.putText(frame, "FPS : {}".format(text), (10, 20),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+#        cv2.putText(frame, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),(10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
+#        cv2.putText(frame,"Drink time : {}".format(textd),(10,50),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
+#        cv2.putText(frame,"Count : {}".format(textc),(10,80),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
+#        cv2.putText(frame,"Sum : {}".format(texts),(10,110),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
 		
 		#frame = imutils.resize(frame,width=400)
-        cv2.imshow("Frame",frame)
-        cv2.imshow("Img",img)
+#        cv2.imshow("Frame",frame)
+#        cv2.imshow("Img",img)
+
 #       textc=str(count)
 #       texts = str(sum)
 #       textd=str(drink_time)
