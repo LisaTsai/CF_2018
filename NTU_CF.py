@@ -45,6 +45,7 @@ drink_time = 0
 drink_total = 10
 FPS = 10 # count_max
 vote_max2,vote_count2,vote_num2 = 30,0,0
+vote_thre=7
 cow_num,vote_num = 0,0
 contour_list = []
 area_within_thre = 0
@@ -232,17 +233,17 @@ while True:
             for a in range(len(vote_count)-1):
                 if vote_count[a] == 0:
                     vote_num+=1
-            if vote_num < 5 :
+            if vote_num < vote_thre :
                 vote_num=0
                 for a in range(len(vote_count)):
                     if a >= 1:
                         vote_num+=1
-                if vote_num >= 5 :
+                if vote_num >= vote_thre :
                     vote_num=0
                     for a in range(len(vote_count)):
                         if a >= 2:
                             vote_num+=1
-                    if vote_num >= 5 :
+                    if vote_num >= vote_thre :
                         cow_num = 2
                 else:
                     cow_num=1
