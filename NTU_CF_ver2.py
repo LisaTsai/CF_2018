@@ -114,7 +114,7 @@ else:
 	
 camera=PiCamera()
 camera.resolution=(640,480)
-camera.framerate = 10
+camera.framerate = 1
 camera.rotation = 0
 #camera.awb_mode = 'auto'
 #camera.drc_strength = 'high'
@@ -164,7 +164,7 @@ while True:
         if (i+1) % 5 == 1:
             accu_img = delta
         elif (i+1) % 5 != 0:
-            accu_img = cv2.accumulate(delta,accu_img)
+            cv2.accumulate(delta,accu_img)
         else:
             thre=cv2.threshold(accu_img,thre_v,thre_max, cv2.THRESH_BINARY)[1]
 		#lastframe = median
