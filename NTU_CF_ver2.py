@@ -160,17 +160,23 @@ while True:
             break
 		# Step 4 : absolute diff between lastframe and current frame
         delta = cv2.absdiff(lastframe,median)
-        thre=cv2.threshold(delta,thre_v,thre_max, cv2.THRESH_BINARY)[1]
+        # 5 sets of accumulation
+        if (i+1) % 5 == 1:
+            accu_img = delta
+        elif (i+1) % 5 != 0:
+            accu_img = cv2.accumulate(delta,accu_img)
+        else:
+            thre=cv2.threshold(accu_img,thre_v,thre_max, cv2.THRESH_BINARY)[1]
 		#lastframe = median
 		# Step 5 : dilate to fill in holes, then find contours
-        dil = cv2.dilate(thre, None, iterations=2)
-        ero = cv2.erode(dil,None,iterations=2)
-        (cnts, _) = cv2.findContours(ero.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-        count = 0 #accumulated count
+            dil = cv2.dilate(thre, None, iterations=2)
+            ero = cv2.erode(dil,None,iterations=2)
+            (cnts, _) = cv2.findContours(ero.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+            count = 0 #accumulated count
 		# Step 6 : loop over the contours
-        for c in cnts:
-            x1,y1,w1,h1 = cv2.boundingRect(c)
-            cx,cy = x1+w1/2, y1+h1/2
+            for c in cnts:
+                x1,y1,w1,h1 = cv2.boundingRect(c)
+                cx,cy = x1+w1/2, y1+h1/2
 			#if i <=1:
 			#	vote_cx.append(cx)
 			#	vote_cy.append(cy)
@@ -194,107 +200,107 @@ while True:
 			#			vote_count[z]+=1
 					
 			# if the contour is too small, ignore it
-            if h1 < h1_min or cv2.contourArea(c) < min_areaD or w1 < w1_min or w1 > w1_max:
-                continue
-            sum+=1
-            count +=1
+                if h1 < h1_min or cv2.contourArea(c) < min_areaD or w1 < w1_min or w1 > w1_max:
+                    continue
+                sum+=1
+                count +=1
 			# compute the bounding box for the contour and  draw
-            (x, y, w, h) = cv2.boundingRect(c)
+                (x, y, w, h) = cv2.boundingRect(c)
 
-            cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        textc=str(count)
-        texts = str(sum)
-        textd=str(drink_time)
-        text=str(i)
-#        cv2.putText(frame, "FPS : {}".format(text), (10, 20),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-#        cv2.putText(frame, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),(10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
-#        cv2.putText(frame,"Drink time : {}".format(textd),(10,50),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
-#        cv2.putText(frame,"Count : {}".format(textc),(10,80),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
-#        cv2.putText(frame,"Sum : {}".format(texts),(10,110),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
+                cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            textc=str(count)
+            texts = str(sum)
+            textd=str(drink_time)
+            text=str(i)
+#           cv2.putText(frame, "FPS : {}".format(text), (10, 20),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+#           cv2.putText(frame, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),(10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
+#           cv2.putText(frame,"Drink time : {}".format(textd),(10,50),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
+#           cv2.putText(frame,"Count : {}".format(textc),(10,80),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
+#           cv2.putText(frame,"Sum : {}".format(texts),(10,110),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
 		
 		#frame = imutils.resize(frame,width=400)
-#        cv2.imshow("Frame",frame)
-#        cv2.imshow("Img",img)
+#           cv2.imshow("Frame",frame)
+#           cv2.imshow("Img",img)
 
-#       textc=str(count)
-#       texts = str(sum)
-#       textd=str(drink_time)
-#       text=str(i)
-#       cv2.putText(frame, "FPS : {}".format(text), (10, 20),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-#       cv2.putText(frame, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),(10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
-#       cv2.putText(frame,"Drink time : {}".format(textd),(10,50),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
-#       cv2.putText(frame,"Count : {}".format(textc),(10,80),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
-#       cv2.putText(frame,"Sum : {}".format(texts),(10,110),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
+#           textc=str(count)
+#           texts = str(sum)
+#           textd=str(drink_time)
+#           text=str(i)
+#           cv2.putText(frame, "FPS : {}".format(text), (10, 20),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+#           cv2.putText(frame, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),(10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
+#           cv2.putText(frame,"Drink time : {}".format(textd),(10,50),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
+#           cv2.putText(frame,"Count : {}".format(textc),(10,80),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
+#           cv2.putText(frame,"Sum : {}".format(texts),(10,110),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
 		
 		#frame = imutils.resize(frame,width=400)
 #               cv2.imshow("Frame",frame)
 #		cv2.imshow("Gray",gray)
 #		cv2.imshow("Median",median)
 #		cv2.imshow("Delta",delta)
-        vote_count.append(count)       
-        key = cv2.waitKey(1)&0xFF
-        raw.truncate(0)
+            vote_count.append(count)       
+            key = cv2.waitKey(1)&0xFF
+            raw.truncate(0)
 		#fps.update()
-        if i == FPS:
+            if i == i_max:
 			# DT format for sensors
-            cow_num,vote_num=0,0
-            for a in range(len(vote_count)-1):
-                if vote_count[a] == 0:
-                    vote_num+=1
-            if vote_num < vote_thre :
-                vote_num=0
-                for a in range(len(vote_count)):
-                    if a >= 1:
+                cow_num,vote_num=0,0
+                for a in range(len(vote_count)-1):
+                    if vote_count[a] == 0:
                         vote_num+=1
-                if vote_num >= vote_thre :
+                if vote_num < vote_thre :
                     vote_num=0
                     for a in range(len(vote_count)):
-                        if a >= 2:
+                        if a >= 1:
                             vote_num+=1
                     if vote_num >= vote_thre :
-                        cow_num = 2
-                else:
-                    cow_num=1
-            time_stamp=time.time()
-            date_stamp = datetime.datetime.fromtimestamp(time_stamp).strftime('%Y-%m-%d %H-%M-%S')
-            text=[date_stamp,cow_num,vote_num,"10"]
-            if vote_num >= 5 and cow_num > 0:
-                vote_num2 += 1
-            print(text)
-            with open(csv_filename, 'ab') as csv_file:
-                writer = csv.writer(csv_file,delimiter=':')
-                writer.writerow(text)
-            vote_count=[]
-            if vote_count2 < vote_max2:
-                vote_count2 += 1
-            else :
-                vote_count2 = 0
-                if vote_num2 >= 5:
-                    mydir = "/home/pi/COW_IMAGES_in/"
-                    try:
-                        os.makedirs(mydir)
-                    except OSError:
-                        if not os.path.isdir(mydir):
-                            raise
-                    os.chdir(mydir)
-                    filename = time.strftime("%Y_%m_%d %H_%M_%S")+'.jpg'
-                    cv2.imwrite(filename,img)
-                    sendImage(filename,inout_flag)
-                    inout_flag = 1
-                elif vote_num2 < 5 and inout_flag == 0:
-                    mydir = "/home/pi/COW_IMAGES_out/"
-                    try:
-                        os.makedirs(mydir)
-                    except OSError:
-                        if not os.path.isdir(mydir):
-                            raise
-                    os.chdir(mydir)
-                    filename = time.strftime("%Y_%m_%d %H_%M_%S")+'.jpg'
-                    cv2.imwrite(filename,img)
-                    sendImage(filename,inout_flag)
-                    inout_flag = 0
-                vote_num2 = 0
-            break
+                        vote_num=0
+                        for a in range(len(vote_count)):
+                            if a >= 2:
+                                vote_num+=1
+                        if vote_num >= vote_thre :
+                            cow_num = 2
+                    else:
+                        cow_num=1
+                time_stamp=time.time()
+                date_stamp = datetime.datetime.fromtimestamp(time_stamp).strftime('%Y-%m-%d %H-%M-%S')
+                text=[date_stamp,cow_num,vote_num,"10"]
+                if vote_num >= 5 and cow_num > 0:
+                    vote_num2 += 1
+                print(text)
+                with open(csv_filename, 'ab') as csv_file:
+                    writer = csv.writer(csv_file,delimiter=':')
+                    writer.writerow(text)
+                vote_count=[]
+                if vote_count2 < vote_max2:
+                    vote_count2 += 1
+                else :
+                    vote_count2 = 0
+                    if vote_num2 >= 5:
+                        mydir = "/home/pi/COW_IMAGES_in/"
+                        try:
+                            os.makedirs(mydir)
+                        except OSError:
+                            if not os.path.isdir(mydir):
+                                raise
+                        os.chdir(mydir)
+                        filename = time.strftime("%Y_%m_%d %H_%M_%S")+'.jpg'
+                        cv2.imwrite(filename,img)
+                        sendImage(filename,inout_flag)
+                        inout_flag = 1
+                    elif vote_num2 < 5 and inout_flag == 0:
+                        mydir = "/home/pi/COW_IMAGES_out/"
+                        try:
+                            os.makedirs(mydir)
+                        except OSError:
+                            if not os.path.isdir(mydir):
+                                raise
+                        os.chdir(mydir)
+                        filename = time.strftime("%Y_%m_%d %H_%M_%S")+'.jpg'
+                        cv2.imwrite(filename,img)
+                        sendImage(filename,inout_flag)
+                        inout_flag = 0
+                    vote_num2 = 0
+                break
 #fps.stop()
 #print("[INFO] elapsed time:{:,2f}".format(fps.elapsed()))
 #print("[INFO] approx. FPS: {:,2f}".fomat(fps.fps()))
