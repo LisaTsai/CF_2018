@@ -20,11 +20,11 @@ delta = cv2.absdiff(bgmedian,median)
 cv2.imwrite('/home/pi/Desktop/delta.jpg',delta)
 thre=cv2.threshold(delta,25,255, cv2.THRESH_BINARY)[1]
 cv2.imwrite('/home/pi/Desktop/threshold.jpg',thre)
-ero = cv2.erode(thre,None,iterations=3)
-dil = cv2.dilate(ero, None, iterations=3)
+ero = cv2.erode(thre,None,iterations=4)
+dil = cv2.dilate(ero, None, iterations=4)
 cv2.imwrite('/home/pi/Desktop/erode.jpg',ero)
 cv2.imwrite('/home/pi/Desktop/dilation.jpg',dil)
-(cnts, _) = cv2.findContours(thre.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+(cnts, _) = cv2.findContours(dil.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
 for c in cnts:
     (x, y, w, h) = cv2.boundingRect(c)
     if h < h1_min or cv2.contourArea(c) < min_areaD or  cv2.contourArea(c) > max_areaD or w < w1_min or w > w1_max:
