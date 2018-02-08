@@ -32,14 +32,14 @@ import datetime
 db_enable = 1
 
 textc,sum,counter = 0,0,0
-thre_v,thre_max = 20,255
+thre_v,thre_max = 25,255
 #lastframe = None
 #NTU_CF node2 sink
 crop_x,crop_y,crop_w,crop_h = 100,250,380,100
 #NTU_CF node1 sink 
 #crop_x,crop_y,crop_w,crop_h = 70,268,345,67
-min_areaD,max_areaD = 800,10000
-w1_min,w1_max,h1_min = 3,640,10
+min_areaD,max_areaD = 4000,10000
+w1_min,w1_max,h1_min = 3,640,80
 vote_cx,vote_cy,vote_count,drink_length = [],[],[],[]
 drink_time = 0
 drink_total = 10
@@ -141,7 +141,7 @@ while True:
     for(i,f) in enumerate(stream):
         frame = f.array
         img=frame.copy()
-        frame = frame[crop_y:crop_y+crop_h,crop_x:crop_x+crop_w]
+        # frame = frame[crop_y:crop_y+crop_h,crop_x:crop_x+crop_w]
         # Step 1 : grayscale
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         # Step 2 : medianBlur
@@ -156,8 +156,9 @@ while True:
         thre=cv2.threshold(delta,thre_v,thre_max, cv2.THRESH_BINARY)[1]
 		#lastframe = median
 		# Step 5 : dilate to fill in holes, then find contours
-        thre = cv2.dilate(thre, None, iterations=2)
-        (cnts, _) = cv2.findContours(thre.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+        dil = cv2.dilate(thre, None, iterations=2)
+        ero = cv2.erode(dil,None,iterations=2)
+        (cnts, _) = cv2.findContours(ero.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
         count = 0 #accumulated count
 		# Step 6 : loop over the contours
         for c in cnts:
@@ -186,14 +187,14 @@ while True:
 			#			vote_count[z]+=1
 					
 			# if the contour is too small, ignore it
-            if h1 < h1_min or cv2.contourArea(c) < min_areaD or  cv2.contourArea(c) > max_areaD or w1 < w1_min or w1 > w1_max:
+            if h1 < h1_min or cv2.contourArea(c) < min_areaD or w1 < w1_min or w1 > w1_max:
                 continue
             sum+=1
             count +=1
 			# compute the bounding box for the contour and  draw
             (x, y, w, h) = cv2.boundingRect(c)
 
-            cv2.rectangle(img, (x+crop_x, y+crop_y), (x+crop_x + w, y+crop_y + h), (0, 255, 0), 2)
+            cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
         textc=str(count)
         texts = str(sum)
         textd=str(drink_time)
