@@ -3,7 +3,8 @@
 By Lisa Tsai
 Latest update - 2018/02/13
 
-2018/02/13 +accumulated difference
+2018/02/13 +accumulated difference / vote once / bg
+
 
 '''
 ################# Libraries ###################
@@ -40,18 +41,20 @@ crop_x,crop_y,crop_w,crop_h = 100,250,380,100
 #NTU_CF node1 sink 
 #crop_x,crop_y,crop_w,crop_h = 70,268,345,67
 
-w1_min,w1_max,h1_min = 3,200,80
-min_areaD,max_areaD = 400,8000
+#sink only
+#w1_min,w1_max,h1_min = 3,200,80
+#min_areaD,max_areaD = 400,8000
 
 #All range
-#w1_min,w1_max,h1_min = 3,640,80
-#min_areaD,max_areaD = 2000,10000
+w1_min,w1_max,h1_min = 3,640,80
+min_areaD,max_areaD = 2000,10000
 vote_cx,vote_cy,vote_count,drink_length = [],[],[],[]
 drink_time = 0
 drink_total = 10
 FPS = 5 # count_max
 vote_constant = 10
 i_max=FPS*vote_constant-1
+#sencond round of vote
 vote_max2,vote_count2,vote_num2 = 10,0,0
 vote_thre=7
 cow_num,vote_num = 0,0
@@ -60,7 +63,9 @@ area_within_thre = 0
 x_within_thre = 0
 y_within_thre = 0
 inout_flag = 0
-accu_counter = 0 #for frame diff adding
+
+#background image
+bg = cv2.imread('/home/pi/bg.jpg')
 
 #sink position
 f = open('/home/pi/Adafruit_Python_BME280/sink.txt','r')
@@ -122,7 +127,7 @@ else:
 	
 camera=PiCamera()
 camera.resolution=(640,480)
-camera.framerate = 5
+camera.framerate = FPS
 camera.rotation = 0
 sleep(0.5)
 
@@ -155,8 +160,10 @@ while True:
         #frame = frame[crop_y:crop_y+crop_h,crop_x:crop_x+crop_w]
         # Step 1 : grayscale
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        graybg = cv2.cvtColor(bg, cv2.COLOR_BGR2GRAY)
         # Step 2 : medianBlur
         median = cv2.medianBlur(gray,7)
+        medianbg = cv2.medianBlur(graybg,7)
 	# Step 3 : find lastframe
         if counter == 0:
             lastframe = median
@@ -164,20 +171,26 @@ while True:
             print "lastframe dealed"
             break
 	# Step 4 : absolute diff between lastframe and current frame
+	deltab = cv2.absdiff(medianbg,median)
         delta = cv2.absdiff(lastframe,median)
-        # 5 sets of accumulation
+        # 5 sets of accumulation between frames
         if i%5 == 0:
             accu_img = delta
+            accu_imgb = deltab
         elif i%5 == 1:
             accu_img = cv2.addWeighted(delta,0.5,accu_img,0.5,0)
+            accu_imgb = cv2.addWeighted(deltab,0.5,accu_imgb,0.5,0)
         elif i%5 == 2:
             accu_img = cv2.addWeighted(delta,0.33,accu_img,0.67,0)
+            accu_imgb = cv2.addWeighted(deltab,0.33,accu_imgb,0.67,0)
         elif i%5 == 3:
             accu_img = cv2.addWeighted(delta,0.25,accu_img,0.75,0)
+            accu_imgb = cv2.addWeighted(deltab,0.25,accu_imgb,0.75,0)
         else:
             accu_img = cv2.addWeighted(delta,0.2,accu_img,0.8,0)
-            
-            thre=cv2.threshold(accu_img,thre_v,thre_max, cv2.THRESH_BINARY)[1]
+            accu_imgb = cv2.addWeighted(deltab,0.2,accu_imgb,0.8,0)
+            accu_re = cv2.addWeighted(accu_img,0.7,accu_imgb,0.3,0)
+            thre=cv2.threshold(accu_re,thre_v,thre_max, cv2.THRESH_BINARY)[1]
             #print "THRESHOLD DONE"
 	    # Step 5 : dilate to fill in holes, then find contours
             dil = cv2.dilate(thre, None, iterations=2)
@@ -193,7 +206,7 @@ while True:
                     continue
                 sum+=1
                 count +=1
-			# compute the bounding box for the contour and  draw
+		# compute the bounding box for the contour and  draw
                 (x, y, w, h) = cv2.boundingRect(c)
                 cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
             #cv2.imshow("Frame",frame)
@@ -210,38 +223,19 @@ while True:
             if i == i_max:
                 print "%s secs" % (time.time()-start_time)
                 cow_num,vote_num=0,0
-                for a in range(len(vote_count)-1):
-                    if vote_count[a] == 0:
-                        vote_num+=1
-                if vote_num < vote_thre :
-                    vote_num=0
+                if inout_flag == 0:
                     for a in range(len(vote_count)):
-                        if a >= 1:
+                        if vote_count[a] != 0:
                             vote_num+=1
                     if vote_num >= vote_thre :
-                        vote_num=0
-                        for a in range(len(vote_count)):
-                            if a >= 2:
-                                vote_num+=1
-                        if vote_num >= vote_thre :
-                            cow_num = 2
-                    else:
-                        cow_num=1
-                time_stamp=time.time()
-                date_stamp = datetime.datetime.fromtimestamp(time_stamp).strftime('%Y-%m-%d %H-%M-%S')
-                text=[date_stamp,cow_num,vote_num,len(vote_count)]
-                if vote_num >= 5 and cow_num > 0:
-                    vote_num2 += 1
-                print(text)
-                with open(csv_filename, 'ab') as csv_file:
-                    writer = csv.writer(csv_file,delimiter=':')
-                    writer.writerow(text)
-                vote_count=[]
-                if vote_count2 < vote_max2:
-                    vote_count2 += 1
-                else :
-                    vote_count2 = 0
-                    if vote_num2 >= 5:
+                        inout_flag,cow_num = 1,1
+                        time_stamp=time.time()
+                        date_stamp = datetime.datetime.fromtimestamp(time_stamp).strftime('%Y-%m-%d %H-%M-%S')
+                        text=[date_stamp,cow_num,vote_num,len(vote_count)]
+                        print(text)
+                        with open(csv_filename, 'ab') as csv_file:
+                            writer = csv.writer(csv_file,delimiter=':')
+                            writer.writerow(text)
                         mydir = "/home/pi/COW_IMAGES_in/"
                         try:
                             os.makedirs(mydir)
@@ -252,8 +246,21 @@ while True:
                         filename = time.strftime("%Y_%m_%d %H_%M_%S")+'.jpg'
                         cv2.imwrite(filename,img)
                         sendImage(filename,inout_flag)
-                        inout_flag = 1
-                    elif vote_num2 < 5 and inout_flag == 0:
+                    vote_count=[]
+                elif inout_flag == 1:
+                    for a in range(len(vote_count)-1):
+                        if vote_count[a] == 0:
+                            vote_num+=1
+                    if vote_num >= vote_thre :
+                        inout_flag,cow_num = 0,0
+                        time_stamp=time.time()
+                        date_stamp = datetime.datetime.fromtimestamp(time_stamp).strftime('%Y-%m-%d %H-%M-%S')
+                        
+                        text=[date_stamp,cow_num,vote_num,len(vote_count)]
+                        print(text)
+                        with open(csv_filename, 'ab') as csv_file:
+                            writer = csv.writer(csv_file,delimiter=':')
+                            writer.writerow(text)
                         mydir = "/home/pi/COW_IMAGES_out/"
                         try:
                             os.makedirs(mydir)
@@ -263,9 +270,9 @@ while True:
                         os.chdir(mydir)
                         filename = time.strftime("%Y_%m_%d %H_%M_%S")+'.jpg'
                         cv2.imwrite(filename,img)
+                        bg = cv2.addWeighted(bg,0.8,frame,0.2,0)
                         sendImage(filename,inout_flag)
-                        inout_flag = 0
-                    vote_num2 = 0
+                    vote_count=[]
                 break
         raw.truncate(0)
         
