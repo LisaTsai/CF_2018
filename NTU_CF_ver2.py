@@ -32,20 +32,25 @@ import datetime
 db_enable = 1
 
 textc,sum,counter = 0,0,0
-thre_v,thre_max = 25,255
-#lastframe = None
+thre_v,thre_max = 20,255
 #NTU_CF node2 sink
 crop_x,crop_y,crop_w,crop_h = 100,250,380,100
 #NTU_CF node1 sink 
 #crop_x,crop_y,crop_w,crop_h = 70,268,345,67
-min_areaD,max_areaD = 4000,10000
-w1_min,w1_max,h1_min = 3,640,80
+
+w1_min,w1_max,h1_min = 3,200,80
+min_areaD,max_areaD = 400,8000
+
+#All range
+#w1_min,w1_max,h1_min = 3,640,80
+#min_areaD,max_areaD = 2000,10000
 vote_cx,vote_cy,vote_count,drink_length = [],[],[],[]
 drink_time = 0
 drink_total = 10
-FPS = 10 # count_max
-i_max=FPS*5
-vote_max2,vote_count2,vote_num2 = 30,0,0
+FPS = 5 # count_max
+vote_constant = 10
+i_max=FPS*vote_constant-1
+vote_max2,vote_count2,vote_num2 = 10,0,0
 vote_thre=7
 cow_num,vote_num = 0,0
 contour_list = []
@@ -53,6 +58,7 @@ area_within_thre = 0
 x_within_thre = 0
 y_within_thre = 0
 inout_flag = 0
+accu_counter = 0 #for frame diff adding
 
 #sink position
 f = open('/home/pi/Adafruit_Python_BME280/sink.txt','r')
@@ -114,10 +120,8 @@ else:
 	
 camera=PiCamera()
 camera.resolution=(640,480)
-camera.framerate = 1
+camera.framerate = 5
 camera.rotation = 0
-#camera.awb_mode = 'auto'
-#camera.drc_strength = 'high'
 sleep(0.5)
 
 
@@ -134,115 +138,75 @@ def sendImage(locationx,inout):
     try:
         if os.path.isfile(locationx):
             os.remove(locationx)
-            #print("delete sucess")
     except Exception as e:
         print e
+    
 ####
 
 while True:
-    #camera.start_preview()
+    start_time=time.time()
     raw=PiRGBArray(camera,size=(640,480))
     stream = camera.capture_continuous(raw,format="bgr",use_video_port=True)
-    #print("[INFO]sampling frames from picamera module")
-    #fps=FPS().start()
     for(i,f) in enumerate(stream):
         frame = f.array
         img=frame.copy()
-        # frame = frame[crop_y:crop_y+crop_h,crop_x:crop_x+crop_w]
+        #frame = frame[crop_y:crop_y+crop_h,crop_x:crop_x+crop_w]
         # Step 1 : grayscale
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         # Step 2 : medianBlur
         median = cv2.medianBlur(gray,7)
-		# Step 3 : find lastframe
+	# Step 3 : find lastframe
         if counter == 0:
             lastframe = median
             counter = 1
+            print "lastframe dealed"
             break
-		# Step 4 : absolute diff between lastframe and current frame
+	# Step 4 : absolute diff between lastframe and current frame
         delta = cv2.absdiff(lastframe,median)
         # 5 sets of accumulation
-        if (i+1) % 5 == 1:
+        if i%5 == 0:
             accu_img = delta
-        elif (i+1) % 5 != 0:
-            cv2.accumulate(delta,accu_img)
+        elif i%5 == 1:
+            accu_img = cv2.addWeighted(delta,0.5,accu_img,0.5,0)
+        elif i%5 == 2:
+            accu_img = cv2.addWeighted(delta,0.33,accu_img,0.67,0)
+        elif i%5 == 3:
+            accu_img = cv2.addWeighted(delta,0.25,accu_img,0.75,0)
         else:
+            accu_img = cv2.addWeighted(delta,0.2,accu_img,0.8,0)
+            
             thre=cv2.threshold(accu_img,thre_v,thre_max, cv2.THRESH_BINARY)[1]
-		#lastframe = median
-		# Step 5 : dilate to fill in holes, then find contours
+            #print "THRESHOLD DONE"
+	    # Step 5 : dilate to fill in holes, then find contours
             dil = cv2.dilate(thre, None, iterations=2)
             ero = cv2.erode(dil,None,iterations=2)
             (cnts, _) = cv2.findContours(ero.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-            count = 0 #accumulated count
-		# Step 6 : loop over the contours
+            count = 0 #accumulated count number of cow
+	    # Step 6 : loop over the contours
             for c in cnts:
                 x1,y1,w1,h1 = cv2.boundingRect(c)
-                cx,cy = x1+w1/2, y1+h1/2
-			#if i <=1:
-			#	vote_cx.append(cx)
-			#	vote_cy.append(cy)
-			#	vote_count.append(0)
-			#	drink_length.append(0)
-			#elif i == FPS:
-			#	for z in range(len(vote_cx)):
-			#		flagc = vote_count[z]
-			#		vote_count[z]=0
-			#		if flagc > FPS/2:
-			#			drink_length[z]+=1
-			#			drink_time += 1
-			#		else:
-			#			del vote_cx[z]
-			#			del vote_cy[z]
-			#			del drink_length[z]
-			#			del vote_count[z]
-			#else:
-			#	for z in range(len(vote_cx)):
-			#		if abs(cx-vote_cx[z])<50 and abs(cy-vote_cy[z])<50 :
-			#			vote_count[z]+=1
-					
-			# if the contour is too small, ignore it
+                cx,cy = x1+w1/2, y1+h1/2			
+		# if the contour is too small, ignore it
                 if h1 < h1_min or cv2.contourArea(c) < min_areaD or w1 < w1_min or w1 > w1_max:
                     continue
                 sum+=1
                 count +=1
 			# compute the bounding box for the contour and  draw
                 (x, y, w, h) = cv2.boundingRect(c)
-
                 cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            textc=str(count)
-            texts = str(sum)
-            textd=str(drink_time)
-            text=str(i)
-#           cv2.putText(frame, "FPS : {}".format(text), (10, 20),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-#           cv2.putText(frame, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),(10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
-#           cv2.putText(frame,"Drink time : {}".format(textd),(10,50),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
-#           cv2.putText(frame,"Count : {}".format(textc),(10,80),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
-#           cv2.putText(frame,"Sum : {}".format(texts),(10,110),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
-		
-		#frame = imutils.resize(frame,width=400)
-#           cv2.imshow("Frame",frame)
-#           cv2.imshow("Img",img)
-
-#           textc=str(count)
-#           texts = str(sum)
-#           textd=str(drink_time)
-#           text=str(i)
-#           cv2.putText(frame, "FPS : {}".format(text), (10, 20),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-#           cv2.putText(frame, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),(10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
-#           cv2.putText(frame,"Drink time : {}".format(textd),(10,50),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
-#           cv2.putText(frame,"Count : {}".format(textc),(10,80),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
-#           cv2.putText(frame,"Sum : {}".format(texts),(10,110),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,0,255),2)
-		
-		#frame = imutils.resize(frame,width=400)
-#               cv2.imshow("Frame",frame)
-#		cv2.imshow("Gray",gray)
-#		cv2.imshow("Median",median)
-#		cv2.imshow("Delta",delta)
+            #cv2.imshow("Frame",frame)
+            #cv2.imshow("Img",img)
+            #cv2.imshow("accuimg",accu_img)
+            #cv2.imshow("dil",dil)
+            #cv2.imshow("ero",ero)
+            #cv2.imshow("thre",thre)
+            #print i
             vote_count.append(count)       
             key = cv2.waitKey(1)&0xFF
             raw.truncate(0)
-		#fps.update()
+
             if i == i_max:
-			# DT format for sensors
+                print "%s secs" % (time.time()-start_time)
                 cow_num,vote_num=0,0
                 for a in range(len(vote_count)-1):
                     if vote_count[a] == 0:
@@ -263,7 +227,7 @@ while True:
                         cow_num=1
                 time_stamp=time.time()
                 date_stamp = datetime.datetime.fromtimestamp(time_stamp).strftime('%Y-%m-%d %H-%M-%S')
-                text=[date_stamp,cow_num,vote_num,"10"]
+                text=[date_stamp,cow_num,vote_num,len(vote_count)]
                 if vote_num >= 5 and cow_num > 0:
                     vote_num2 += 1
                 print(text)
@@ -301,9 +265,8 @@ while True:
                         inout_flag = 0
                     vote_num2 = 0
                 break
-#fps.stop()
-#print("[INFO] elapsed time:{:,2f}".format(fps.elapsed()))
-#print("[INFO] approx. FPS: {:,2f}".fomat(fps.fps()))
+        raw.truncate(0)
+        
 cv2.destroyAllWindows()
 stream.close()
 raw.close()
