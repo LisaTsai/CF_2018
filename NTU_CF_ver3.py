@@ -167,7 +167,7 @@ while True:
 	# Step 3 : find lastframe
         if i%6 == 0:
             lastframe = median
-            print "lastframe dealed"
+            #print "lastframe dealed"
             raw.truncate(0)
             continue
 	# Step 4 : absolute diff between lastframe and current frame
