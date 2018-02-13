@@ -224,7 +224,7 @@ while True:
             raw.truncate(0)
 
             if i == i_max:
-                print "%s secs" % (time.time()-start_time)
+                #print "%s secs" % (time.time()-start_time)
                 cow_num,vote_num=0,0
                 if inout_flag == 0:
                     for a in range(len(vote_count)):
