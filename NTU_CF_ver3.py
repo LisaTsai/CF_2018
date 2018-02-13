@@ -46,12 +46,12 @@ crop_x,crop_y,crop_w,crop_h = 100,250,380,100
 #min_areaD,max_areaD = 400,8000
 
 #All range
-w1_min,w1_max,h1_min = 3,640,80
+w1_min,w1_max,h1_min = 3,350,80
 min_areaD,max_areaD = 2000,10000
 vote_cx,vote_cy,vote_count,drink_length = [],[],[],[]
 drink_time = 0
 drink_total = 10
-FPS = 5 # count_max
+FPS = 6 # count_max
 vote_constant = 10
 i_max=FPS*vote_constant-1
 #sencond round of vote
@@ -165,35 +165,35 @@ while True:
         median = cv2.medianBlur(gray,7)
         medianbg = cv2.medianBlur(graybg,7)
 	# Step 3 : find lastframe
-        if counter == 0:
+        if i%6 == 0:
             lastframe = median
-            counter = 1
             print "lastframe dealed"
-            break
+            raw.truncate(0)
+            continue
 	# Step 4 : absolute diff between lastframe and current frame
 	deltab = cv2.absdiff(medianbg,median)
         delta = cv2.absdiff(lastframe,median)
         # 5 sets of accumulation between frames
-        if i%5 == 0:
+        if i%6 == 1:
             accu_img = delta
             accu_imgb = deltab
-        elif i%5 == 1:
+        elif i%6 == 2:
             accu_img = cv2.addWeighted(delta,0.5,accu_img,0.5,0)
             accu_imgb = cv2.addWeighted(deltab,0.5,accu_imgb,0.5,0)
-        elif i%5 == 2:
+        elif i%6 == 3:
             accu_img = cv2.addWeighted(delta,0.33,accu_img,0.67,0)
             accu_imgb = cv2.addWeighted(deltab,0.33,accu_imgb,0.67,0)
-        elif i%5 == 3:
+        elif i%6 == 4:
             accu_img = cv2.addWeighted(delta,0.25,accu_img,0.75,0)
             accu_imgb = cv2.addWeighted(deltab,0.25,accu_imgb,0.75,0)
         else:
             accu_img = cv2.addWeighted(delta,0.2,accu_img,0.8,0)
             accu_imgb = cv2.addWeighted(deltab,0.2,accu_imgb,0.8,0)
-            accu_re = cv2.addWeighted(accu_img,0.7,accu_imgb,0.3,0)
+            accu_re = cv2.addWeighted(accu_img,0.8,accu_imgb,0.2,0)
             thre=cv2.threshold(accu_re,thre_v,thre_max, cv2.THRESH_BINARY)[1]
             #print "THRESHOLD DONE"
 	    # Step 5 : dilate to fill in holes, then find contours
-            dil = cv2.dilate(thre, None, iterations=2)
+            dil = cv2.dilate(thre, None, iterations=4)
             ero = cv2.erode(dil,None,iterations=2)
             (cnts, _) = cv2.findContours(ero.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
             count = 0 #accumulated count number of cow
@@ -216,6 +216,9 @@ while True:
             #cv2.imshow("ero",ero)
             #cv2.imshow("thre",thre)
             #print i
+            #filename = time.strftime("%Y_%m_%d %H_%M_%S")+'.jpg'
+            #cv2.imwrite(filename,img)
+
             vote_count.append(count)       
             key = cv2.waitKey(1)&0xFF
             raw.truncate(0)

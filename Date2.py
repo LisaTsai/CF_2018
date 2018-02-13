@@ -4,12 +4,12 @@ import errno
 from picamera import PiCamera
 
 day = 100
-interval = 300
+interval = 10
 RecordTime = 86400/interval*day
 getthedate = "20170801"
 
 camera = PiCamera()
-camera.resolution = (3280,2464)
+camera.resolution = (640,480)
 
 for i in range(int(RecordTime)):
     getcurrentdate = time.strftime("%Y%m%d")
@@ -22,7 +22,7 @@ for i in range(int(RecordTime)):
             if not os.path.isdir(mydir):
                 raise
         os.chdir(mydir)
-    filename = time.strftime("%H%M")+'.jpg'
+    filename = time.strftime("%H%M%S")+'.jpg'
     camera.capture(filename)
     time.sleep(interval)
 
