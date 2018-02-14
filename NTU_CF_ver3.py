@@ -210,7 +210,7 @@ while True:
                 count +=1
 		# compute the bounding box for the contour and  draw
         #(x, y, w, h) = cv2.boundingRect(c)
-                cv2.rectangle(img, (x1, y2), (x1 + w1, y1 + h1), (0, 255, 0), 2)
+                cv2.rectangle(img, (x1, y1), (x1 + w1, y1 + h1), (0, 255, 0), 2)
             #cv2.imshow("Frame",frame)
             #cv2.imshow("Img",img)
             #cv2.imshow("accuimg",accu_img)
