@@ -1,10 +1,10 @@
 
 '''
 By Lisa Tsai
-Latest update - 2018/02/13
+Latest update - 2018/02/14
 
 2018/02/13 +accumulated difference / vote once / bg
-
+2018/02/14 increase bg update frequency / add conditions of two area overlapped
 
 '''
 ################# Libraries ###################
@@ -164,14 +164,14 @@ while True:
         # Step 2 : medianBlur
         median = cv2.medianBlur(gray,7)
         medianbg = cv2.medianBlur(graybg,7)
-	# Step 3 : find lastframe
+        # Step 3 : find lastframe
         if i%6 == 0:
             lastframe = median
             #print "lastframe dealed"
             raw.truncate(0)
             continue
-	# Step 4 : absolute diff between lastframe and current frame
-	deltab = cv2.absdiff(medianbg,median)
+	    # Step 4 : absolute diff between lastframe and current frame
+        deltab = cv2.absdiff(medianbg,median)
         delta = cv2.absdiff(lastframe,median)
         # 5 sets of accumulation between frames
         if i%6 == 1:
@@ -204,11 +204,13 @@ while True:
 		# if the contour is too small, ignore it
                 if h1 < h1_min or cv2.contourArea(c) < min_areaD or w1 < w1_min or w1 > w1_max:
                     continue
+                if (crop_y+crop_h) < y1 or crop_y > (y1+h1) or (crop_x+crop_w) < x1 or crop_x > (x1+w1):
+                    continue
                 sum+=1
                 count +=1
 		# compute the bounding box for the contour and  draw
-                (x, y, w, h) = cv2.boundingRect(c)
-                cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        #(x, y, w, h) = cv2.boundingRect(c)
+                cv2.rectangle(img, (x1, y2), (x1 + w1, y1 + h1), (0, 255, 0), 2)
             #cv2.imshow("Frame",frame)
             #cv2.imshow("Img",img)
             #cv2.imshow("accuimg",accu_img)
@@ -219,7 +221,7 @@ while True:
             #filename = time.strftime("%Y_%m_%d %H_%M_%S")+'.jpg'
             #cv2.imwrite(filename,img)
 
-            vote_count.append(count)       
+            vote_count.append(count)
             key = cv2.waitKey(1)&0xFF
             raw.truncate(0)
 
@@ -249,6 +251,8 @@ while True:
                         filename = time.strftime("%Y_%m_%d %H_%M_%S")+'.jpg'
                         cv2.imwrite(filename,img)
                         sendImage(filename,inout_flag)
+                    else:
+                        bg = cv2.addWeighted(bg,0.9,frame,0.1,0)
                     vote_count=[]
                 elif inout_flag == 1:
                     for a in range(len(vote_count)-1):
