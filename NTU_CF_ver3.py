@@ -1,11 +1,11 @@
 
 '''
 By Lisa Tsai
-Latest update - 2018/02/14
+Latest update - 2018/02/22
 
 2018/02/13 +accumulated difference / vote once / bg
 2018/02/14 increase bg update frequency / add conditions of two area overlapped
-
+2018/02/22 MySQL
 '''
 ################# Libraries ###################
 
@@ -29,6 +29,7 @@ import time
 #logfile for img
 import csv
 import datetime
+import MySQLdb
 
 ### Options
 
@@ -235,8 +236,8 @@ while True:
                     if vote_num >= vote_thre :
                         inout_flag,cow_num = 1,1
                         time_stamp=time.time()
-                        date_stamp = datetime.datetime.fromtimestamp(time_stamp).strftime('%Y-%m-%d %H-%M-%S')
-                        text=[date_stamp,cow_num,vote_num,len(vote_count)]
+                        start_date_stamp = datetime.datetime.fromtimestamp(time_stamp).strftime('%Y-%m-%d %H:%M:%S')
+                        text=[start_date_stamp,cow_num,vote_num,len(vote_count)]
                         print(text)
                         with open(csv_filename, 'ab') as csv_file:
                             writer = csv.writer(csv_file,delimiter=':')
@@ -261,10 +262,21 @@ while True:
                     if vote_num >= vote_thre :
                         inout_flag,cow_num = 0,0
                         time_stamp=time.time()
-                        date_stamp = datetime.datetime.fromtimestamp(time_stamp).strftime('%Y-%m-%d %H-%M-%S')
+                        end_date_stamp = datetime.datetime.fromtimestamp(time_stamp).strftime('%Y-%m-%d %H:%M:%S')
                         
-                        text=[date_stamp,cow_num,vote_num,len(vote_count)]
+                        text=[end_date_stamp,cow_num,vote_num,len(vote_count)]
                         print(text)
+                        #send_text=[start_date_stamp,end_date_stamp,vote_num,len(vote_count),node_in/10]
+                        conn = MySQLdb.connect(host="140.112.94.123",port=10000,user="root",passwd="ntubime405",db="dairy_cow405")
+                        x=conn.cursor()
+                        s1=str(vote_num)
+                        s2=str(len(vote_count))
+                        s3=str(int(node_in)/10)
+
+                        x.execute('INSERT INTO logfile_image (time_start,time_end,voting_results,voting_total,NODE)' 'VALUES (%s,%s,%s,%s,%s)',(start_date_stamp,end_date_stamp,s1,s2,s3))
+                        conn.commit()
+                        conn.close()
+                        print 'INSERT INTO logfile_image (time_start,time_end,voting_results,voting_total,NODE) VALUES (%s,%s,%s,%s,%s)',(start_date_stamp,end_date_stamp,s1,s2,s3)
                         with open(csv_filename, 'ab') as csv_file:
                             writer = csv.writer(csv_file,delimiter=':')
                             writer.writerow(text)
