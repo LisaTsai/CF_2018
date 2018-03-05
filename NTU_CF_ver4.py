@@ -43,12 +43,12 @@ crop_x,crop_y,crop_w,crop_h = 100,250,380,100
 #crop_x,crop_y,crop_w,crop_h = 70,268,345,67
 
 #sink only
-#w1_min,w1_max,h1_min = 3,200,80
-#min_areaD,max_areaD = 400,8000
+w1_min_sink,w1_max_sink,h1_min_sink = 3,200,30
+min_areaD_sink,max_areaD_sink = 400,8000
 
 #All range
-w1_min,w1_max,h1_min = 3,350,80
-min_areaD,max_areaD = 2000,10000
+w1_min,w1_max,h1_min = 3,400,30
+min_areaD,max_areaD = 1000,100000
 vote_cx,vote_cy,vote_count,drink_length = [],[],[],[]
 drink_time = 0
 drink_total = 10
@@ -74,6 +74,8 @@ sink = f.read()
 sink = sink.strip('/n')
 a = sink.split(',')
 crop_x,crop_y,crop_w,crop_h =int(a[0]),int(a[1]),int(a[2]),int(a[3])
+bg_sink = bg[crop_y:crop_y+crop_h,crop_x:crop_x+crop_w]
+cv2.imwrite('/home/pi/bg_sink.jpg',bg_sink)
 
 #db number
 f = open('/home/pi/Adafruit_Python_BME280/DB_NUM.txt','r')
@@ -158,60 +160,74 @@ while True:
     for(i,f) in enumerate(stream):
         frame = f.array
         img=frame.copy()
-        #frame = frame[crop_y:crop_y+crop_h,crop_x:crop_x+crop_w]
+        frame_sink = frame[crop_y:crop_y+crop_h,crop_x:crop_x+crop_w]
+        img_sink = frame_sink.copy()
         # Step 1 : grayscale
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        gray_sink = cv2.cvtColor(frame_sink, cv2.COLOR_BGR2GRAY)
         graybg = cv2.cvtColor(bg, cv2.COLOR_BGR2GRAY)
+        graybg_sink = cv2.cvtColor(bg_sink, cv2.COLOR_BGR2GRAY)
         # Step 2 : medianBlur
         median = cv2.medianBlur(gray,7)
+        median_sink = cv2.medianBlur(gray_sink,7)
         medianbg = cv2.medianBlur(graybg,7)
+        medianbg_sink = cv2.medianBlur(graybg_sink,7)
         # Step 3 : find lastframe
         if i%6 == 0:
             lastframe = median
+            lastframe_sink=median_sink
             #print "lastframe dealed"
             raw.truncate(0)
             continue
 	    # Step 4 : absolute diff between lastframe and current frame
         deltab = cv2.absdiff(medianbg,median)
         delta = cv2.absdiff(lastframe,median)
+        deltab_sink = cv2.absdiff(medianbg_sink,median_sink)
+        delta_sink = cv2.absdiff(lastframe_sink,median_sink)
         # 5 sets of accumulation between frames
         if i%6 == 1:
             accu_img = delta
             accu_imgb = deltab
+            accu_img_sink = delta_sink
+            accu_imgb_sink = deltab_sink
         elif i%6 == 2:
             accu_img = cv2.addWeighted(delta,0.5,accu_img,0.5,0)
             accu_imgb = cv2.addWeighted(deltab,0.5,accu_imgb,0.5,0)
+            accu_img_sink = cv2.addWeighted(delta_sink,0.5,accu_img_sink,0.5,0)
+            accu_imgb_sink = cv2.addWeighted(deltab_sink,0.5,accu_imgb_sink,0.5,0)
         elif i%6 == 3:
             accu_img = cv2.addWeighted(delta,0.33,accu_img,0.67,0)
             accu_imgb = cv2.addWeighted(deltab,0.33,accu_imgb,0.67,0)
+            accu_img_sink = cv2.addWeighted(delta_sink,0.33,accu_img_sink,0.67,0)
+            accu_imgb_sink = cv2.addWeighted(deltab_sink,0.33,accu_imgb_sink,0.67,0)
         elif i%6 == 4:
             accu_img = cv2.addWeighted(delta,0.25,accu_img,0.75,0)
             accu_imgb = cv2.addWeighted(deltab,0.25,accu_imgb,0.75,0)
+            accu_img_sink = cv2.addWeighted(delta_sink,0.25,accu_img_sink,0.75,0)
+            accu_imgb_sink = cv2.addWeighted(deltab_sink,0.25,accu_imgb_sink,0.75,0)
         else:
-            accu_img = cv2.addWeighted(delta,0.2,accu_img,0.8,0)
-            accu_imgb = cv2.addWeighted(deltab,0.2,accu_imgb,0.8,0)
-            accu_re = cv2.addWeighted(accu_img,0.8,accu_imgb,0.2,0)
-            thre=cv2.threshold(accu_re,thre_v,thre_max, cv2.THRESH_BINARY)[1]
+            accu_img_sink = cv2.addWeighted(delta_sink,0.2,accu_img_sink,0.8,0)
+            accu_imgb_sink = cv2.addWeighted(deltab_sink,0.2,accu_imgb_sink,0.8,0)
+            accu_re_sink = cv2.addWeighted(accu_img_sink,0.8,accu_imgb_sink,0.2,0)
+            thre_sink=cv2.threshold(accu_re_sink,thre_v,thre_max, cv2.THRESH_BINARY)[1]
             #print "THRESHOLD DONE"
 	    # Step 5 : dilate to fill in holes, then find contours
-            dil = cv2.dilate(thre, None, iterations=4)
-            ero = cv2.erode(dil,None,iterations=2)
-            (cnts, _) = cv2.findContours(ero.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+            dil_sink = cv2.dilate(thre_sink, None, iterations=4)
+            ero_sink = cv2.erode(dil_sink,None,iterations=2)
+            (cnts, _) = cv2.findContours(ero_sink.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
             count = 0 #accumulated count number of cow
 	    # Step 6 : loop over the contours
             for c in cnts:
                 x1,y1,w1,h1 = cv2.boundingRect(c)
                 cx,cy = x1+w1/2, y1+h1/2			
-		# if the contour is too small, ignore it
-                if h1 < h1_min or cv2.contourArea(c) < min_areaD or w1 < w1_min or w1 > w1_max:
-                    continue
-                if (crop_y+crop_h) < y1 or crop_y > (y1+h1) or (crop_x+crop_w) < x1 or crop_x > (x1+w1):
+                if h1 < h1_min_sink or cv2.contourArea(c) < min_areaD_sink or w1 < w1_min_sink or w1 > w1_max_sink:
                     continue
                 sum+=1
                 count +=1
-		# compute the bounding box for the contour and  draw
-        #(x, y, w, h) = cv2.boundingRect(c)
-                cv2.rectangle(img, (x1, y1), (x1 + w1, y1 + h1), (0, 255, 0), 2)
+                cv2.rectangle(img, (x1+crop_x, y1+crop_y), (x1 + w1+crop_x, y1 + h1+crop_y), (0, 255, 0), 2)
+                cv2.rectangle(img, (crop_x, crop_y), (crop_x + crop_w, crop_y + crop_h), (0, 0, 255), 2)
+                img_sink[thre_sink>0]=(0,255,255)
+                img[crop_y:crop_y+crop_h,crop_x:crop_x+crop_w]=img_sink
             #cv2.imshow("Frame",frame)
             #cv2.imshow("Img",img)
             #cv2.imshow("accuimg",accu_img)
@@ -220,10 +236,29 @@ while True:
             #cv2.imshow("thre",thre)
             #print i
             ########
-            filename = time.strftime("%Y_%m_%d %H_%M_%S")+'.jpg'
-            cv2.imwrite(filename,img)
+            '''filename = time.strftime("%Y_%m_%d %H_%M_%S")+'.jpg'
+            cv2.imwrite(filename,img)'''
             #########
             vote_count.append(count)
+            if count > 0 :
+                accu_img = cv2.addWeighted(delta,0.2,accu_img,0.8,0)
+                accu_imgb = cv2.addWeighted(deltab,0.2,accu_imgb,0.8,0)
+                accu_re = cv2.addWeighted(accu_img,0.8,accu_imgb,0.2,0)
+                thre=cv2.threshold(accu_re,thre_v,thre_max, cv2.THRESH_BINARY)[1]
+                dil = cv2.dilate(thre, None, iterations=4)
+                ero = cv2.erode(dil,None,iterations=2)
+                (cnts, _) = cv2.findContours(ero.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+                for c in cnts:
+                    x1,y1,w1,h1 = cv2.boundingRect(c)		
+                    if h1 < h1_min or cv2.contourArea(c) < min_areaD or w1 < w1_min or w1 > w1_max:
+                        continue
+                    if (crop_y+crop_h) < y1 or crop_y > (y1+h1) or (crop_x+crop_w) < x1 or crop_x > (x1+w1):
+                        continue
+                    cv2.rectangle(img, (x1, y1), (x1 + w1, y1 + h1), (255, 0, 0), 2)
+                    #img[thre>0]=(0,255,255)
+                cv2.imwrite('/home/pi/in.jpg',img)
+            else :
+                cv2.imwrite('/home/pi/out.jpg',img)
             key = cv2.waitKey(1)&0xFF
             raw.truncate(0)
 
@@ -251,6 +286,7 @@ while True:
                                 raise
                         os.chdir(mydir)
                         filename = time.strftime("%Y_%m_%d %H_%M_%S")+'.jpg'
+                        img = cv2.imread('/home/pi/in.jpg')
                         cv2.imwrite(filename,img)
                         sendImage(filename,inout_flag)
                     else:
@@ -289,6 +325,7 @@ while True:
                                 raise
                         os.chdir(mydir)
                         filename = time.strftime("%Y_%m_%d %H_%M_%S")+'.jpg'
+                        img = cv2.imread('/home/pi/out.jpg')
                         cv2.imwrite(filename,img)
                         bg = cv2.addWeighted(bg,0.8,frame,0.2,0)
                         sendImage(filename,inout_flag)
