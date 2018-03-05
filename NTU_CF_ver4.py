@@ -42,6 +42,12 @@ crop_x,crop_y,crop_w,crop_h = 100,250,380,100
 #NTU_CF node1 sink 
 #crop_x,crop_y,crop_w,crop_h = 70,268,345,67
 
+#cow position
+cow_pos_x = []
+cow_pos_y = []
+cow_pos_w = []
+cow_pos_h = []
+
 #sink only
 w1_min_sink,w1_max_sink,h1_min_sink = 3,200,30
 min_areaD_sink,max_areaD_sink = 400,8000
@@ -217,6 +223,8 @@ while True:
             (cnts, _) = cv2.findContours(ero_sink.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
             count = 0 #accumulated count number of cow
 	    # Step 6 : loop over the contours
+            img_sink_copy = img_sink.copy()
+            img_sink_copy[ero_sink>0]=(0,255,255)
             for c in cnts:
                 x1,y1,w1,h1 = cv2.boundingRect(c)
                 cx,cy = x1+w1/2, y1+h1/2			
@@ -224,10 +232,18 @@ while True:
                     continue
                 sum+=1
                 count +=1
+                
+                cow_pos_x.append(crop_x+x1)
+                cow_pos_y.append(crop_y+y1)
+                cow_pos_h.append(h1)
+                cow_pos_w.append(w1)
+                
+                img_sink_crop = img_sink_copy[y1:y1+h1,x1:x1+w1]
+                img[crop_y+y1:crop_y+y1+h1,crop_x+x1:crop_x+x1+w1]=img_sink_crop
                 cv2.rectangle(img, (x1+crop_x, y1+crop_y), (x1 + w1+crop_x, y1 + h1+crop_y), (0, 255, 0), 2)
                 cv2.rectangle(img, (crop_x, crop_y), (crop_x + crop_w, crop_y + crop_h), (0, 0, 255), 2)
-                img_sink[thre_sink>0]=(0,255,255)
-                img[crop_y:crop_y+crop_h,crop_x:crop_x+crop_w]=img_sink
+                #img_sink[thre_sink>0]=(0,255,255)
+                
             #cv2.imshow("Frame",frame)
             #cv2.imshow("Img",img)
             #cv2.imshow("accuimg",accu_img)
@@ -254,7 +270,9 @@ while True:
                         continue
                     if (crop_y+crop_h) < y1 or crop_y > (y1+h1) or (crop_x+crop_w) < x1 or crop_x > (x1+w1):
                         continue
-                    cv2.rectangle(img, (x1, y1), (x1 + w1, y1 + h1), (255, 0, 0), 2)
+                    for a in range(len(cow_pos_x)):
+                        if x1 <= cow_pos_x[a] and y1 <= cow_pos_y[a] and x1+w1 >=cow_pos_x[a]+cow_pos_w[a] and y1+h1 >= cow_pos_y[a]+cow_pos_h[a]:
+                            cv2.rectangle(img, (x1, y1), (x1 + w1, y1 + h1), (255, 0, 0), 2)
                     #img[thre>0]=(0,255,255)
                 cv2.imwrite('/home/pi/in.jpg',img)
             else :
