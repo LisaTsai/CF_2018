@@ -240,8 +240,8 @@ while True:
                 
                 img_sink_crop = img_sink_copy[y1:y1+h1,x1:x1+w1]
                 img[crop_y+y1:crop_y+y1+h1,crop_x+x1:crop_x+x1+w1]=img_sink_crop
-                cv2.rectangle(img, (x1+crop_x, y1+crop_y), (x1 + w1+crop_x, y1 + h1+crop_y), (0, 255, 0), 2)
-                cv2.rectangle(img, (crop_x, crop_y), (crop_x + crop_w, crop_y + crop_h), (0, 0, 255), 2)
+                cv2.rectangle(img, (x1+crop_x, y1+crop_y), (x1 + w1+crop_x, y1 + h1+crop_y), (255, 0, 0), 2)
+                #cv2.rectangle(img, (crop_x, crop_y), (crop_x + crop_w, crop_y + crop_h), (0, 0, 255), 2)
                 #img_sink[thre_sink>0]=(0,255,255)
                 
             #cv2.imshow("Frame",frame)
@@ -272,7 +272,7 @@ while True:
                         continue
                     for a in range(len(cow_pos_x)):
                         if x1 <= cow_pos_x[a] and y1 <= cow_pos_y[a] and x1+w1 >=cow_pos_x[a]+cow_pos_w[a] and y1+h1 >= cow_pos_y[a]+cow_pos_h[a]:
-                            cv2.rectangle(img, (x1, y1), (x1 + w1, y1 + h1), (255, 0, 0), 2)
+                            cv2.rectangle(img, (x1, y1), (x1 + w1, y1 + h1), (0, 255, 0), 2)
                     #img[thre>0]=(0,255,255)
                 cv2.imwrite('/home/pi/in.jpg',img)
             else :
