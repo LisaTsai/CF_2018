@@ -271,7 +271,7 @@ while True:
                     if (crop_y+crop_h) < y1 or crop_y > (y1+h1) or (crop_x+crop_w) < x1 or crop_x > (x1+w1):
                         continue
                     for a in range(len(cow_pos_x)):
-                        if x1 <= cow_pos_x[a] and y1 <= cow_pos_y[a] and x1+w1 >=cow_pos_x[a]+cow_pos_w[a] and y1+h1 >= cow_pos_y[a]+cow_pos_h[a]:
+                        if x1 <= cow_pos_x[a]+5 and y1 <= cow_pos_y[a]+5 and x1+w1 >=cow_pos_x[a]+cow_pos_w[a]-5 and y1+h1 >= cow_pos_y[a]+cow_pos_h[a]-5:
                             cv2.rectangle(img, (x1, y1), (x1 + w1, y1 + h1), (0, 255, 0), 2)
                     #img[thre>0]=(0,255,255)
                 cv2.imwrite('/home/pi/in.jpg',img)
