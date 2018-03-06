@@ -309,6 +309,7 @@ while True:
                         sendImage(filename,inout_flag)
                     else:
                         bg = cv2.addWeighted(bg,0.9,frame,0.1,0)
+                        cv2.imwrite('/home/pi/bg.jpg',bg)
                     vote_count=[]
                 elif inout_flag == 1:
                     for a in range(len(vote_count)-1):
@@ -346,6 +347,7 @@ while True:
                         img = cv2.imread('/home/pi/out.jpg')
                         cv2.imwrite(filename,img)
                         bg = cv2.addWeighted(bg,0.8,frame,0.2,0)
+                        cv2.imwrite('/home/pi/bg.jpg',bg)
                         sendImage(filename,inout_flag)
                     vote_count=[]
                 break
