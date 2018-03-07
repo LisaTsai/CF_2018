@@ -15,4 +15,10 @@ Mac install MySQLdb for python
 
 After Node Installation
 1. git clone https://github.com/LisaTsai/CF_2018.git
+2. sudo pip install imutils
+3. sudo apt-get -y install python-opencv
+4. sudo apt-get -y install python-mysqldb
+5. python NTU_CF_verX.py
+
+
 
