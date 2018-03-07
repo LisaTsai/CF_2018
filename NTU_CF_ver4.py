@@ -308,8 +308,10 @@ while True:
                         cv2.imwrite(filename,img)
                         sendImage(filename,inout_flag)
                     else:
-                        bg = cv2.addWeighted(bg,0.9,frame,0.1,0)
+                        bg = cv2.addWeighted(bg,0.7,frame,0.3,0)
                         cv2.imwrite('/home/pi/bg.jpg',bg)
+                        bg_sink = bg[crop_y:crop_y+crop_h,crop_x:crop_x+crop_w]
+                        cv2.imwrite('/home/pi/bg_sink.jpg',bg_sink)
                     vote_count=[]
                 elif inout_flag == 1:
                     for a in range(len(vote_count)-1):
@@ -346,8 +348,10 @@ while True:
                         filename = time.strftime("%Y_%m_%d %H_%M_%S")+'.jpg'
                         img = cv2.imread('/home/pi/out.jpg')
                         cv2.imwrite(filename,img)
-                        bg = cv2.addWeighted(bg,0.8,frame,0.2,0)
+                        bg = cv2.addWeighted(bg,0.7,frame,0.3,0)
                         cv2.imwrite('/home/pi/bg.jpg',bg)
+                        bg_sink = bg[crop_y:crop_y+crop_h,crop_x:crop_x+crop_w]
+                        cv2.imwrite('/home/pi/bg_sink.jpg',bg_sink)
                         sendImage(filename,inout_flag)
                     vote_count=[]
                 break
