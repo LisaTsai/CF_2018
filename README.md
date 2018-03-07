@@ -1,6 +1,6 @@
 # CF_2018
 
-Latest update - 20180112
+Latest update - 20180307
 
 Windows install MySQLdb for python
 1. install git bash
@@ -12,3 +12,7 @@ Windows install MySQLdb for python
 Mac install MySQLdb for python
 1. install xcode
 2. sudo pip install MySQL-python
+
+After Node Installation
+1. git clone https://github.com/LisaTsai/CF_2018.git
+
