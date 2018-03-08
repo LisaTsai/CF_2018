@@ -19,4 +19,9 @@ After Node Installation
 3. cd CF_2018
 4. sh setup.sh
 
+Stop Autostart Programs
+1. sudo nano /etc/rc.local
+2. comment the python ~ line with #
+3. sudo reboot
+=> remember to uncomment after finished
 
