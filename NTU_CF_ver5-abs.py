@@ -31,7 +31,6 @@ import csv
 import datetime
 import MySQLdb
 
-
 print "--------"
 print "current time is " + time.strftime("%Y-%m-%d %H:%M:%S")
 print "--------"
@@ -200,30 +199,8 @@ while True:
         deltab_sink = cv2.absdiff(medianbg_sink,median_sink)
         delta_sink = cv2.absdiff(lastframe_sink,median_sink)
         # 5 sets of accumulation between frames
-        if i%6 == 1:
-            accu_img = delta
-            accu_imgb = deltab
-            accu_img_sink = delta_sink
-            accu_imgb_sink = deltab_sink
-        elif i%6 == 2:
-            accu_img = cv2.addWeighted(delta,0.5,accu_img,0.5,0)
-            accu_imgb = cv2.addWeighted(deltab,0.5,accu_imgb,0.5,0)
-            accu_img_sink = cv2.addWeighted(delta_sink,0.5,accu_img_sink,0.5,0)
-            accu_imgb_sink = cv2.addWeighted(deltab_sink,0.5,accu_imgb_sink,0.5,0)
-        elif i%6 == 3:
-            accu_img = cv2.addWeighted(delta,0.33,accu_img,0.67,0)
-            accu_imgb = cv2.addWeighted(deltab,0.33,accu_imgb,0.67,0)
-            accu_img_sink = cv2.addWeighted(delta_sink,0.33,accu_img_sink,0.67,0)
-            accu_imgb_sink = cv2.addWeighted(deltab_sink,0.33,accu_imgb_sink,0.67,0)
-        elif i%6 == 4:
-            accu_img = cv2.addWeighted(delta,0.25,accu_img,0.75,0)
-            accu_imgb = cv2.addWeighted(deltab,0.25,accu_imgb,0.75,0)
-            accu_img_sink = cv2.addWeighted(delta_sink,0.25,accu_img_sink,0.75,0)
-            accu_imgb_sink = cv2.addWeighted(deltab_sink,0.25,accu_imgb_sink,0.75,0)
-        else:
-            accu_img_sink = cv2.addWeighted(delta_sink,0.2,accu_img_sink,0.8,0)
-            accu_imgb_sink = cv2.addWeighted(deltab_sink,0.2,accu_imgb_sink,0.8,0)
-            accu_re_sink = cv2.addWeighted(accu_img_sink,0.8,accu_imgb_sink,0.2,0)
+        if i != 0:
+            accu_re_sink = cv2.addWeighted(delta_sink,0.8,deltab_sink,0.2,0)
             thre_sink=cv2.threshold(accu_re_sink,thre_v,thre_max, cv2.THRESH_BINARY)[1]
             #print "THRESHOLD DONE"
 	    # Step 5 : dilate to fill in holes, then find contours
@@ -266,9 +243,7 @@ while True:
             #########
             vote_count.append(count)
             if count > 0 :
-                accu_img = cv2.addWeighted(delta,0.2,accu_img,0.8,0)
-                accu_imgb = cv2.addWeighted(deltab,0.2,accu_imgb,0.8,0)
-                accu_re = cv2.addWeighted(accu_img,0.8,accu_imgb,0.2,0)
+                accu_re = cv2.addWeighted(delta,0.8,deltab,0.2,0)
                 thre=cv2.threshold(accu_re,thre_v,thre_max, cv2.THRESH_BINARY)[1]
                 dil = cv2.dilate(thre, None, iterations=4)
                 ero = cv2.erode(dil,None,iterations=2)
@@ -366,7 +341,7 @@ while True:
                 print "--------"
                 print "current time is " + time.strftime("%Y-%m-%d %H:%M:%S")
                 print "--------"
-                print inout_flag
+                print inout_flag 
                 break
         raw.truncate(0)
         

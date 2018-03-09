@@ -31,7 +31,6 @@ import csv
 import datetime
 import MySQLdb
 
-
 print "--------"
 print "current time is " + time.strftime("%Y-%m-%d %H:%M:%S")
 print "--------"
@@ -75,7 +74,8 @@ area_within_thre = 0
 x_within_thre = 0
 y_within_thre = 0
 inout_flag = 0
-
+pre_inout_flag = 0
+vote2_re = 0
 #background image
 bg = cv2.imread('/home/pi/bg.jpg')
 
@@ -297,26 +297,11 @@ while True:
                         if vote_count[a] != 0:
                             vote_num+=1
                     if vote_num >= vote_thre :
+                        pre_inout_flag = inout_flag
                         inout_flag,cow_num = 1,1
-                        time_stamp=time.time()
-                        start_date_stamp = datetime.datetime.fromtimestamp(time_stamp).strftime('%Y-%m-%d %H:%M:%S')
-                        text=[start_date_stamp,cow_num,vote_num,len(vote_count)]
-                        print(text)
-                        with open(csv_filename, 'ab') as csv_file:
-                            writer = csv.writer(csv_file,delimiter=':')
-                            writer.writerow(text)
-                        mydir = "/home/pi/COW_IMAGES_in/"
-                        try:
-                            os.makedirs(mydir)
-                        except OSError:
-                            if not os.path.isdir(mydir):
-                                raise
-                        os.chdir(mydir)
-                        filename = time.strftime("%Y_%m_%d %H_%M_%S")+'.jpg'
-                        img = cv2.imread('/home/pi/in.jpg')
-                        cv2.imwrite(filename,img)
-                        sendImage(filename,inout_flag)
                     else:
+                        pre_inout_flag = inout_flag
+                        inout_flag = 0
                         bg = cv2.addWeighted(bg,0.7,frame,0.3,0)
                         cv2.imwrite('/home/pi/bg.jpg',bg)
                         bg_sink = bg[crop_y:crop_y+crop_h,crop_x:crop_x+crop_w]
@@ -327,46 +312,72 @@ while True:
                         if vote_count[a] == 0:
                             vote_num+=1
                     if vote_num >= vote_thre :
+                        pre_inout_flag = inout_flag
                         inout_flag,cow_num = 0,0
-                        time_stamp=time.time()
-                        end_date_stamp = datetime.datetime.fromtimestamp(time_stamp).strftime('%Y-%m-%d %H:%M:%S')
-                        
-                        text=[end_date_stamp,cow_num,vote_num,len(vote_count)]
-                        print(text)
-                        #send_text=[start_date_stamp,end_date_stamp,vote_num,len(vote_count),node_in/10]
-                        conn = MySQLdb.connect(host="140.112.94.123",port=10000,user="root",passwd="ntubime405",db="dairy_cow405")
-                        x=conn.cursor()
-                        s1=str(vote_num)
-                        s2=str(len(vote_count))
-                        s3=str(int(node_in)/10)
+                    else:
+                        pre_inout_flag = inout_flag
+                        inout_flag = 1
+                    vote_count=[]   
+                if vote2_re == 0 and pre_inout_flag == 1 and pre_inout_flag == 1:
+                    vote2_re = 1
+                    time_stamp=time.time()
+                    start_date_stamp = datetime.datetime.fromtimestamp(time_stamp).strftime('%Y-%m-%d %H:%M:%S')
+                    text=[start_date_stamp,cow_num,vote_num,len(vote_count)]
+                    print(text)
+                    with open(csv_filename, 'ab') as csv_file:
+                        writer = csv.writer(csv_file,delimiter=':')
+                        writer.writerow(text)
+                    mydir = "/home/pi/COW_IMAGES_in/"
+                    try:
+                        os.makedirs(mydir)
+                    except OSError:
+                        if not os.path.isdir(mydir):
+                            raise
+                    os.chdir(mydir)
+                    filename = time.strftime("%Y_%m_%d %H_%M_%S")+'.jpg'
+                    img = cv2.imread('/home/pi/in.jpg')
+                    cv2.imwrite(filename,img)
+                    sendImage(filename,vote2_re)
+                if vote2_re == 1 and pre_inout_flag == 0 and pre_inout_flag == 0:
+                    time_stamp=time.time()
+                    end_date_stamp = datetime.datetime.fromtimestamp(time_stamp).strftime('%Y-%m-%d %H:%M:%S')
+                    text=[end_date_stamp,cow_num,vote_num,len(vote_count)]
+                    print(text)
+                    #send_text=[start_date_stamp,end_date_stamp,vote_num,len(vote_count),node_in/10]
+                    conn = MySQLdb.connect(host="140.112.94.123",port=10000,user="root",passwd="ntubime405",db="dairy_cow405")
+                    x=conn.cursor()
+                    s1=str(vote_num)
+                    s2=str(len(vote_count))
+                    s3=str(int(node_in)/10)
 
-                        x.execute('INSERT INTO logfile_image (time_start,time_end,voting_results,voting_total,NODE)' 'VALUES (%s,%s,%s,%s,%s)',(start_date_stamp,end_date_stamp,s1,s2,s3))
-                        conn.commit()
-                        conn.close()
-                        print 'INSERT INTO logfile_image (time_start,time_end,voting_results,voting_total,NODE) VALUES (%s,%s,%s,%s,%s)',(start_date_stamp,end_date_stamp,s1,s2,s3)
-                        with open(csv_filename, 'ab') as csv_file:
-                            writer = csv.writer(csv_file,delimiter=':')
-                            writer.writerow(text)
-                        mydir = "/home/pi/COW_IMAGES_out/"
-                        try:
-                            os.makedirs(mydir)
-                        except OSError:
-                            if not os.path.isdir(mydir):
-                                raise
-                        os.chdir(mydir)
-                        filename = time.strftime("%Y_%m_%d %H_%M_%S")+'.jpg'
-                        img = cv2.imread('/home/pi/out.jpg')
-                        cv2.imwrite(filename,img)
-                        bg = cv2.addWeighted(bg,0.7,frame,0.3,0)
-                        cv2.imwrite('/home/pi/bg.jpg',bg)
-                        bg_sink = bg[crop_y:crop_y+crop_h,crop_x:crop_x+crop_w]
-                        cv2.imwrite('/home/pi/bg_sink.jpg',bg_sink)
-                        sendImage(filename,inout_flag)
-                    vote_count=[]
+                    x.execute('INSERT INTO logfile_image (time_start,time_end,voting_results,voting_total,NODE)' 'VALUES (%s,%s,%s,%s,%s)',(start_date_stamp,end_date_stamp,s1,s2,s3))
+                    conn.commit()
+                    conn.close()
+                    print 'INSERT INTO logfile_image (time_start,time_end,voting_results,voting_total,NODE) VALUES (%s,%s,%s,%s,%s)',(start_date_stamp,end_date_stamp,s1,s2,s3)
+                    with open(csv_filename, 'ab') as csv_file:
+                        writer = csv.writer(csv_file,delimiter=':')
+                        writer.writerow(text)
+                    mydir = "/home/pi/COW_IMAGES_out/"
+                    try:
+                        os.makedirs(mydir)
+                    except OSError:
+                        if not os.path.isdir(mydir):
+                            raise
+                    os.chdir(mydir)
+                    filename = time.strftime("%Y_%m_%d %H_%M_%S")+'.jpg'
+                    img = cv2.imread('/home/pi/out.jpg')
+                    cv2.imwrite(filename,img)
+                    bg = cv2.addWeighted(bg,0.7,frame,0.3,0)
+                    cv2.imwrite('/home/pi/bg.jpg',bg)
+                    bg_sink = bg[crop_y:crop_y+crop_h,crop_x:crop_x+crop_w]
+                    cv2.imwrite('/home/pi/bg_sink.jpg',bg_sink)
+                    sendImage(filename,inout_flag)
                 print "--------"
                 print "current time is " + time.strftime("%Y-%m-%d %H:%M:%S")
                 print "--------"
+                print pre_inout_flag
                 print inout_flag
+                print vote2_re
                 break
         raw.truncate(0)
         
