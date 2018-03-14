@@ -1,10 +1,10 @@
 import cv2
 from time import sleep
-#crop_x,crop_y,crop_w,crop_h = 142,265,338,70
-crop_x,crop_y,crop_w,crop_h = 95,275,330,67
+crop_x,crop_y,crop_w,crop_h = 142,265,338,70
+#crop_x,crop_y,crop_w,crop_h = 95,275,330,67
 x,y=0,0
 
-img = cv2.imread("/home/pi/Desktop/bg.jpg")
+img = cv2.imread("/home/pi/Desktop/132710.jpg")
 cv2.rectangle(img, (x+crop_x, y+crop_y), (x+crop_x + crop_w, y+crop_y + crop_h), (255, 0, 0), 2)
 cv2.imshow("Test",img)
 #sleep(500)
