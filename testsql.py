@@ -16,7 +16,7 @@ if ans == "n":
     date = raw_input("Please type the date in the form like 2018-02-24 to get data")
 csv_filename = date+".csv"
 
-text =['DATE','TYPE','VALUE','THI']
+text =['DATE','TYPE','VALUE','THI','NODE']
 if os.path.isfile(csv_filename):
     print("today's file already exists")
 else:
@@ -43,15 +43,16 @@ try :
         #print type(m)
         TYPE=row[2]
         VALUE=row[3]
+        NODE=row[6]
         if TYPE == "T" :
             T=float(VALUE)
-            text=[DATE,TYPE,VALUE]
+            text=[DATE,TYPE,VALUE,NODE]
         else: 
             H=float(VALUE)
             THI = (1.8*T+32)-(0.55-0.0055*H)*(1.8*T-26)	
             #hour_ave[h][m]=THI
             #print hour_ave[h][m]		
-            text=[DATE,TYPE,VALUE,THI]
+            text=[DATE,TYPE,VALUE,THI,NODE]
         with open(csv_filename,'ab') as csv_file:
             writer= csv.writer(csv_file,delimiter=',')
             writer.writerow(text)
