@@ -130,7 +130,8 @@ while True:
     f = open('/home/pi/count.txt','r')
     count = f.read()
     count = node_out.strip('\n')
-    filename = os.listdir(image_dir)[-1]
+	filename = "/home/pi/result.jpg"
+    #filename = os.listdir(image_dir)[-1]
     if count != old_flag and count > 0:
         sendImage(filename,1)
         old_flag = 1
