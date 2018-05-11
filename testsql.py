@@ -8,7 +8,7 @@ import os
 d = datetime.datetime.now()
 dx = d.strftime("%Y%m%d")
 date = d.strftime("%Y-%m-%d")
-#print type(date)
+
 print date
 print "today is " + date
 ans=raw_input( "Do you want today's data? (y/n)")
@@ -24,8 +24,8 @@ else:
     with open(csv_filename1,'ab') as csv_file:
         writer= csv.writer(csv_file,delimiter=',')
         writer.writerow(text)
-	file = open(csv_filename2,'w')
-	with open(csv_filename2,'ab') as csv_file:
+    file = open(csv_filename2,'w')
+    with open(csv_filename2,'ab') as csv_file:
         writer= csv.writer(csv_file,delimiter=',')
         writer.writerow(text)
 #hour_ave = [[0 for y in range(61)]for x in range(13)]
@@ -40,11 +40,8 @@ try :
     results = x.fetchall()
     for row in results:
         DATE=row[1]
-	    h = DATE.hour
-        #print h
+	h = DATE.hour
         m = DATE.minute
-        #print m
-        #print type(m)
         TYPE=row[2]
         VALUE=row[3]
         NODE=row[6]
@@ -53,36 +50,18 @@ try :
             text=[DATE,TYPE,VALUE,NODE]
         else: 
             H=float(VALUE)
-            THI = (1.8*T+32)-(0.55-0.0055*H)*(1.8*T-26)	
-            #hour_ave[h][m]=THI
-            #print hour_ave[h][m]		
+            THI = (1.8*T+32)-(0.55-0.0055*H)*(1.8*T-26)			
             text=[DATE,TYPE,VALUE,THI,NODE]
-		if NODE == "9":
-			with open(csv_filename1,'ab') as csv_file:
-				writer= csv.writer(csv_file,delimiter=',')
-				writer.writerow(text)
-		elif NODE == "10":
-			with open(csv_filename2,'ab') as csv_file:
-				writer= csv.writer(csv_file,delimiter=',')
-				writer.writerow(text)	
+            if NODE == "9":
+                with open(csv_filename1,'ab') as csv_file:
+                    writer= csv.writer(csv_file,delimiter=',')
+                    writer.writerow(text)
+            elif NODE == "10":
+                with open(csv_filename2,'ab') as csv_file:
+                    writer= csv.writer(csv_file,delimiter=',')
+                    writer.writerow(text)	
 except:
     print "ERROR : unable to fetch data"
 
 conn.close()
 
-'''
-THI_hour = [0 for x in range(12)]
-for x in range(12):
-    sum = 0.0
-    counter = 0
-    for y in range(60):
-        if hour_ave[x][y] != 0:
-            sum+=hour_ave[x][y]
-            counter+=1
-    if counter != 0:
-        THI_hour[x]=float(sum)/float(counter)
-        text=[x,THI_hour[x]]
-        with open(csv_filename,'ab') as csv_file:
-            writer = csv.writer(csv_file,delimiter=',')
-            writer.writerow(text)
-'''   
