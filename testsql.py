@@ -8,20 +8,24 @@ import os
 d = datetime.datetime.now()
 dx = d.strftime("%Y%m%d")
 date = d.strftime("%Y-%m-%d")
-print type(date)
+#print type(date)
 print date
 print "today is " + date
 ans=raw_input( "Do you want today's data? (y/n)")
 if ans == "n":
     date = raw_input("Please type the date in the form like 2018-02-24 to get data")
-csv_filename = date+".csv"
-
+csv_filename1 = date+"Node9.csv"
+csv_filename2 = date+"Node10.csv"
 text =['DATE','TYPE','VALUE','THI','NODE']
-if os.path.isfile(csv_filename):
+if os.path.isfile(csv_filename1):
     print("today's file already exists")
 else:
-    file = open(csv_filename,'w')
-    with open(csv_filename,'ab') as csv_file:
+    file = open(csv_filename1,'w')
+    with open(csv_filename1,'ab') as csv_file:
+        writer= csv.writer(csv_file,delimiter=',')
+        writer.writerow(text)
+	file = open(csv_filename2,'w')
+	with open(csv_filename2,'ab') as csv_file:
         writer= csv.writer(csv_file,delimiter=',')
         writer.writerow(text)
 #hour_ave = [[0 for y in range(61)]for x in range(13)]
@@ -36,7 +40,7 @@ try :
     results = x.fetchall()
     for row in results:
         DATE=row[1]
-	h = DATE.hour
+	    h = DATE.hour
         #print h
         m = DATE.minute
         #print m
@@ -53,9 +57,14 @@ try :
             #hour_ave[h][m]=THI
             #print hour_ave[h][m]		
             text=[DATE,TYPE,VALUE,THI,NODE]
-        with open(csv_filename,'ab') as csv_file:
-            writer= csv.writer(csv_file,delimiter=',')
-            writer.writerow(text)
+		if NODE == "9":
+			with open(csv_filename1,'ab') as csv_file:
+				writer= csv.writer(csv_file,delimiter=',')
+				writer.writerow(text)
+		elif NODE == "10":
+			with open(csv_filename2,'ab') as csv_file:
+				writer= csv.writer(csv_file,delimiter=',')
+				writer.writerow(text)	
 except:
     print "ERROR : unable to fetch data"
 
