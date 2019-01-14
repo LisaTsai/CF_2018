@@ -30,7 +30,7 @@ import time
 
 import csv
 import datetime
-#import MySQLdb
+import MySQLdb
 
 ### Record Time
 
@@ -277,6 +277,7 @@ while True:
             x.execute('INSERT INTO logfile_image (time_start,time_end,voting_results,voting_total,NODE)' 'VALUES (%s,%s,%s,%s,%s)',(start_date_stamp,end_date_stamp,s1,s2,s3))
             conn.commit()
             conn.close()
+            
             print ('INSERT INTO logfile_image (time_start,time_end,voting_results,voting_total,NODE) VALUES (%s,%s,%s,%s,%s)',(start_date_stamp,end_date_stamp,s1,s2,s3))            
             mydir = "/home/pi/COW_IMAGES_out/"
             try:
