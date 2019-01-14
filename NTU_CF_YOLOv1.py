@@ -268,7 +268,7 @@ while True:
         elif inout_flag == 1 and len(indices) < 1:
             inout_flag,cow_num = 0,0
             time_stamp=time.time()
-            start_date_stamp = datetime.datetime.fromtimestamp(time_stamp).strftime('%Y-%m-%d %H:%M:%S')
+            end_date_stamp = datetime.datetime.fromtimestamp(time_stamp).strftime('%Y-%m-%d %H:%M:%S')
             text=[start_date_stamp,len(indices)]
             print(text)
             conn = MySQLdb.connect(host="140.112.94.123",port=10000,user="root",passwd="ntubime405",db="dairy_cow405")
