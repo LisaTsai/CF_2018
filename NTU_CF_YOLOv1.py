@@ -91,7 +91,7 @@ db = db.strip('\n')
 #node number
 f = open('NODE.txt','r')
 node = f.read()
-node = node_in.strip('\n')
+node = node.strip('\n')
 
 #location
 location = "NTU_CF"
