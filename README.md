@@ -25,3 +25,6 @@ Stop Autostart Programs
 3. sudo reboot
 => remember to uncomment after finished
 
+Check SHT20
+1. $i2cdetect -y 1
+2. Remember to turn on I2C and turn off SPI in the preferences
