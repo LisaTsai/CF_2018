@@ -31,5 +31,6 @@ Check SHT20
 
 
 [Notes]
+
 rc.local can run script as unseenable background program
 use $ps axOT to find the exact file and $kill code_of_program
