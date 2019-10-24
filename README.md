@@ -28,3 +28,8 @@ Stop Autostart Programs
 Check SHT20
 1. $i2cdetect -y 1
 2. Remember to turn on I2C and turn off SPI in the preferences
+
+
+[Notes]
+rc.local can run script as unseenable background program
+use $ps axOT to find the exact file and $kill code_of_program
